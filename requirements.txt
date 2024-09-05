@@ -24,6 +24,7 @@ MarkupSafe==2.1.5
 matplotlib==3.9.2
 matplotlib-inline==0.1.7
 mpmath==1.3.0
+-e git+https://github.com/lindeerik/msc-degree-project.git@e9fd24943876df5f2af0c47fcb616975a3ec4c15#egg=msc_degree_project
 nest-asyncio==1.6.0
 networkx==3.2.1
 numpy==2.0.2

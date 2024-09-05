@@ -1,0 +1,7 @@
+README.md
+setup.py
+src/msc_degree_project.egg-info/PKG-INFO
+src/msc_degree_project.egg-info/SOURCES.txt
+src/msc_degree_project.egg-info/dependency_links.txt
+src/msc_degree_project.egg-info/top_level.txt
+src/visualization/visualize.py

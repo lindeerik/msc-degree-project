@@ -1,5 +1,3 @@
-import matplotlib.pyplot as plt
-
 #Sci-kit
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
@@ -9,16 +7,14 @@ import torch.nn as nn
 import torch.optim as optim
 from skorch import NeuralNetRegressor
 
-from models.neuralnetwork.architecture import ThroughputPredictor
-
-
 #xg-boost
 import xgboost as xgb
 
-
-from visualization.visualize import plotErrors
+from visualization.visualize import *
 from data.data_loader import *
 from models.training import trainModels
+from models.model import Model
+from models.neuralnetwork.architecture import ThroughputPredictor
 
 def main():
     dirParquet = "data/intermediate/"
@@ -79,14 +75,13 @@ def main():
         'batch_size': [128]
     }
 
-    models = {net: paramGridNet, rf: paramGridRf, xGradBoost:paramGridXgb}
+    models = [Model(rf, "Random Forest", paramGridRf), Model(xGradBoost, "XGBoost", paramGridXgb), Model(net, "Neural Network", paramGridNet)]
 
     ### TRAINING AND EVALUATION ###
     errors = trainModels(models, xTrain, yTrain, xVal, yVal, xTest, yTest)
 
     ### CHECK NORMALITY OF ERRORS ###
-    for err in errors:
-        plotErrors(errors, "Model")
-    plt.show()
+    errors = trainModels(models, xTrain, yTrain, xVal, yVal, xTest, yTest)
+    plotModelsErrors(errors,models)
 
 main()

@@ -3,7 +3,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import norm
 
-def plotErrors(errors, title):
+def plotModelsErrors(errors, models):
+    for i in range(len(models)):
+        plotModelErrors(errors[i], models[i].getName())
+    plt.show()
+
+def plotModelErrors(errors, title):
     plt.figure(figsize=(10, 6))
     sns.histplot(errors, kde=False, bins=50, color='skyblue', stat='density', label='Test Errors')
 

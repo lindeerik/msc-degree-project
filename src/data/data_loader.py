@@ -7,7 +7,7 @@ import numpy as np
 from sklearn.preprocessing import OneHotEncoder
 
 
-def loadData(filePath, emptyData):
+def loadDataCsv(filePath, emptyData):
 
     fileNames = glob.glob(os.path.join(filePath , "*.csv"))
     dataFrames = []
@@ -17,6 +17,25 @@ def loadData(filePath, emptyData):
         dataFrames.append(df)
         
     return pd.concat(dataFrames, axis=0, ignore_index=True)
+
+def loadDataParquet(filePath):
+    fileNames = glob.glob(os.path.join(filePath , "*.parquet"))
+    dataFrames = []
+
+    for fileName in fileNames:
+        df = pd.read_parquet(fileName)
+        dataFrames.append(df)
+        
+    return pd.concat(dataFrames, axis=0, ignore_index=True)
+
+def saveDataParquet(dirCsv, dirParquet, emptyData = ""):
+    fileNames = glob.glob(os.path.join(dirCsv , "*.csv"))
+
+    for fileName in fileNames:
+        df = pd.read_csv(fileName, index_col=None, header=0, na_values = emptyData)
+        fileNameParquet = os.path.basename(fileName.replace('csv','parquet'))
+        df.to_parquet(dirParquet + fileNameParquet, engine = "pyarrow")
+
 
 def processData(df, selectedFloatCols,selectedCatCols, dependentCol):
 

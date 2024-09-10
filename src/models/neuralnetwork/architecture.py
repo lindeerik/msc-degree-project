@@ -17,3 +17,14 @@ class ThroughputPredictor(nn.Module):
         x = torch.relu(self.fc2(x))           # Second dense layer + ReLU
         x = self.fc3(x)                       # Final dense layer (no activation)
         return x.squeeze(-1) 
+    
+class PinballLoss(nn.Module):
+    def __init__(self, quantile: float):
+        super().__init__()
+        self.quantile = quantile
+
+    def forward(self, yPred, yTrue):
+        errors = yTrue - yPred
+        loss = torch.max(self.quantile * errors, (self.quantile - 1) * errors)
+        return torch.mean(loss)
+    

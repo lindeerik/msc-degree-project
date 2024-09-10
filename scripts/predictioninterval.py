@@ -15,6 +15,7 @@ from data.data_loader import *
 from models.model import Model
 from models.neuralnetwork.architecture import *
 from models.quantileregression.conformalprediction import *
+from models.quantileregression.pinball import *
 
 def main():
     dirParquet = "data/intermediate/"
@@ -67,12 +68,14 @@ def main():
         'optimizer__weight_decay': [0.01],
         'batch_size': [128]
     }
-    lowerModel = Model(lowerNet, "Lower Bound Neural Network", paramGridNetLower)
-    upperModel = Model(upperNet, "Upper Bound Neural Network", paramGridNetUpper)
-
-    conformalScoreFunc = lambda X,Y: pinballConformalScoreFunc(lowerModel, upperModel, X, Y)
+    lowerScorer = pinballLossScorer(alpha/2)
+    upperScorer = pinballLossScorer(1-alpha/2)
+    lowerModel = Model(lowerNet, "Lower Bound Neural Network", paramGridNetLower, lowerScorer)
+    upperModel = Model(upperNet, "Upper Bound Neural Network", paramGridNetUpper, upperScorer)
 
     quantileRegressor = QuantileRegressor(lowerModel, upperModel)
+
+    conformalScoreFunc = lambda X,Y: pinballConformalScoreFunc(lowerModel, upperModel, X, Y)
     conformalPredictor = ConformalizedQuantileRegressor(quantileRegressor, conformalScoreFunc, alpha)
     conformalPredictor.fit(xTrain, yTrain, xVal, yVal, 3)
 

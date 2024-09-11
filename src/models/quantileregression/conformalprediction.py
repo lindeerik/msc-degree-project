@@ -1,51 +1,74 @@
+from abc import ABC, abstractmethod
 import numpy as np
 
 def getConformalQuantileScore(conformalScoreFunc, dataX, dataY, quantile):
     conformalScores = conformalScoreFunc(dataX, dataY)
-    q = np.quantile(conformalScores, quantile)
-    return q 
+    return np.quantile(conformalScores, quantile)
 
-def pinballConformalScoreFunc(lowerBoundModel, upperBoundModel, X, Y):
-    conformalScore = np.maximum(lowerBoundModel.predict(X)-Y, Y-upperBoundModel.predict(X))
-
-    return conformalScore
-
-class QuantileRegressor:
-    def __init__(self, lowerBoundModel, upperBoundModel):
-        self.lowerBoundModel = lowerBoundModel
-        self.upperBoundModel = upperBoundModel
+class QuantileRegressor(ABC):
+    def __init__(self, models, alpha, name = ''):
+        self._models = models
+        self._alpha = alpha
+        self._name = name
 
     def fit(self, X, Y, folds=5):
-        self.lowerBoundModel.gridSearchFit(X, Y, folds)
-        self.upperBoundModel.gridSearchFit(X, Y, folds)
+        for model in self._models:
+            model.gridSearchFit(X, Y, folds)
 
+    @abstractmethod
     def predict(self, X):
-        lowerBounds = self.lowerBoundModel.predict(X)
-        upperBounds = self.upperBoundModel.predict(X)
-        return [lowerBounds, upperBounds]
+        pass
+
+    def conformalScore(self, X, Y):
+        yPred = self.predict(X)
+        return np.maximum(yPred[0]-Y, Y-yPred[1])
     
     def getCoverageRatio(self, X, Y):
         return np.mean((self.predict(X)[0] <= Y) & (Y <= self.predict(X)[1]))
+    
+    def getAlpha(self):
+        return self._alpha
+    
+    def getName(self):
+        return self._name
+    
+class QuantileRegressorNeuralNet(QuantileRegressor):
+    def predict(self, X):
+        lowerBounds = self._models[0].predict(X)
+        upperBounds = self._models[1].predict(X)
+        return [lowerBounds, upperBounds]
+    
+class QuantileRegressorRandomForest(QuantileRegressor):
+    def predict(self, X):
+        return self._models[0].predict(X)
 
 class ConformalizedQuantileRegressor:
-    def __init__(self, quantileRegressor, conformalScoreFunc, alpha):
-        self.quantileRegressor = quantileRegressor
-        self.conformalScoreFunc = conformalScoreFunc
-        self.alpha = alpha
-        self.conformalQuantileScore = None
+    def __init__(self, quantileRegressor):
+        self._quantileRegressor = quantileRegressor
+        self._conformalScoreFunc = lambda X,Y: quantileRegressor.conformalScore(X,Y)
+        self._alpha = quantileRegressor.getAlpha()
+        self._conformalQuantileScore = None
 
     def fit(self, xTrain, yTrain, xVal, yVal, folds = 5):
-        self.quantileRegressor.fit(xTrain, yTrain, folds)
+        self._quantileRegressor.fit(xTrain, yTrain, folds)
         n = xTrain.shape[0]
-        conformalQuantile = np.ceil((n+1)*(1-self.alpha))/n
-        self.conformalQuantileScore = getConformalQuantileScore(self.conformalScoreFunc, xVal, yVal, conformalQuantile)
+        conformalQuantile = np.ceil((n+1)*(1-self._alpha))/n
+        self._conformalQuantileScore = getConformalQuantileScore(self._conformalScoreFunc, xVal, yVal, conformalQuantile)
 
     def predict(self, X):
-        intervals = self.quantileRegressor.predict(X)
-        return [intervals[0] - self.conformalQuantileScore, intervals[1] + self.conformalQuantileScore]
+        intervals = self._quantileRegressor.predict(X)
+        return [intervals[0] - self._conformalQuantileScore, intervals[1] + self._conformalQuantileScore]
+    
+    def getQuantileRegressor(self):
+        return self._quantileRegressor
     
     def getCoverageRatio(self, X, Y):
         return np.mean((self.predict(X)[0] <= Y) & (Y <= self.predict(X)[1]))
     
     def getAverageIntervalWidth(self, X):
         return np.mean(self.predict(X)[1] - self.predict(X)[0])
+    
+    def getName(self):
+        if self._quantileRegressor.getName() == "":
+            return ""
+        return "Conformalized " + self._quantileRegressor.getName()

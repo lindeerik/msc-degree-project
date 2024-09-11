@@ -26,3 +26,8 @@ def pinballLossScorer(quantile):
     scorerFunc = lambda yTrue, yPred: negPinballLossValue(yTrue, yPred, quantile)
     scorer = make_scorer(scorerFunc, greater_is_better=False)
     return scorer
+
+def doublePinballLossScorer(lowerQuantile, upperQuantile):
+    scorerFunc = lambda yTrue, yPred: negPinballLossValue(yTrue, yPred[0], lowerQuantile) + negPinballLossValue(yTrue, yPred[1], upperQuantile)
+    scorer = make_scorer(scorerFunc, greater_is_better=False)
+    return scorer

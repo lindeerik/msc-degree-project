@@ -13,7 +13,7 @@ class Model:
         return self.__model.predict(X.values)
 
     def fit(self, X, Y):
-        self.__model.fit(X.values, Y.values)
+        self.__model.fit(X.values, Y.values.ravel())
 
     def gridSearchFit(self, X, Y,folds):
         if self.__paramGrid is None:
@@ -21,7 +21,7 @@ class Model:
             self.fit(X, Y)
             return
         grid_search = GridSearchCV(estimator=self.__model, param_grid=self.__paramGrid, cv=folds, n_jobs=-1, scoring=self.__scorer, verbose=1)
-        grid_search.fit(X.values, Y.values)
+        grid_search.fit(X.values, Y.values.ravel())
         self.__model= grid_search.best_estimator_
         self.__bestParams = grid_search.best_params_
 

@@ -9,25 +9,24 @@ class PinballLoss(nn.Module):
         self.quantile = quantile
 
     def forward(self, yPred, yTrue):
-        errors = yTrue - yPred
-        loss = torch.max(self.quantile * errors, (self.quantile - 1) * errors)
+        errors = yPred - yTrue
+        loss = torch.max(-errors * self.quantile, errors * (1-self.quantile))
         return torch.mean(loss)
     
-def negPinballLossValue(yTrue, yPred, quantile):
+def negPinballLossValue(yPred, yTrue, quantile):
     yTrueTensor = torch.tensor(yTrue, dtype=torch.float32)
     yPredTensor = torch.tensor(yPred, dtype=torch.float32)
     
     lossFunc = PinballLoss(quantile=quantile) 
-    lossValue = lossFunc(yTrueTensor, yPredTensor).item()
-    
+    lossValue = lossFunc(yPredTensor, yTrueTensor).item()
     return -lossValue
 
 def pinballLossScorer(quantile):
-    scorerFunc = lambda yTrue, yPred: negPinballLossValue(yTrue, yPred, quantile)
-    scorer = make_scorer(scorerFunc, greater_is_better=False)
+    scorerFunc = lambda yPred, yTrue: negPinballLossValue(yTrue, yPred, quantile)
+    scorer = make_scorer(scorerFunc)
     return scorer
 
 def doublePinballLossScorer(lowerQuantile, upperQuantile):
-    scorerFunc = lambda yTrue, yPred: negPinballLossValue(yTrue, yPred[0], lowerQuantile) + negPinballLossValue(yTrue, yPred[1], upperQuantile)
-    scorer = make_scorer(scorerFunc, greater_is_better=False)
+    scorerFunc = lambda yPred, yTrue: 1/2*(negPinballLossValue(yPred[0], yTrue, lowerQuantile) + negPinballLossValue(yPred[1], yTrue, upperQuantile))
+    scorer = make_scorer(scorerFunc)
     return scorer

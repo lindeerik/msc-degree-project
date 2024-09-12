@@ -3,8 +3,8 @@ import os
 
 import pandas as pd
 import numpy as np
+import category_encoders as ce
 
-from sklearn.preprocessing import OneHotEncoder
 
 
 def loadDataCsv(filePath, emptyData):
@@ -37,16 +37,14 @@ def saveDataParquet(dirCsv, dirParquet, emptyData = ""):
         df.to_parquet(dirParquet + fileNameParquet, engine = "pyarrow")
 
 
-def processData(df, selectedFloatCols,selectedCatCols, dependentCol):
-
+def processData(df, selectedFloatCols,selectedCatCols, dependentCol, binaryEncoding = True):
     selectedCols = selectedFloatCols + selectedCatCols
     selectedCols.append(dependentCol)
     df = df[selectedCols].dropna()
 
-    #one-hot encoding
-    encoder = OneHotEncoder(sparse_output=False, drop='first')  # drop='first' for avoiding multicollinearity
+    encoder = ce.BinaryEncoder(cols=selectedCatCols, drop_invariant=True) if binaryEncoding else ce.OneHotEncoder(cols=selectedCatCols, drop_invariant=True)
     encoded = encoder.fit_transform(df[selectedCatCols])
-    catData = pd.DataFrame(encoded, columns=encoder.get_feature_names_out(selectedCatCols)).reset_index(drop=True)
+    catData = encoded.reset_index(drop=True)
 
 
     #z-score normalization

@@ -26,7 +26,7 @@ def main():
     selectedFloatCols = ["Longitude", "Latitude", "Speed", "RSRP","RSRQ","SNR"]
     selectedCatCols = ["CellID"]
 
-    dataX, dataY = processData(df, selectedFloatCols,selectedCatCols, dependentCol)
+    dataX, dataY = processData(df, selectedFloatCols,selectedCatCols, dependentCol, True)
 
 
     ### DIVIDE INTO TRAINING, VALIDATION AND TEST ###
@@ -81,7 +81,6 @@ def main():
     errors = trainModels(models, xTrain, yTrain, xVal, yVal, xTest, yTest)
 
     ### CHECK NORMALITY OF ERRORS ###
-    errors = trainModels(models, xTrain, yTrain, xVal, yVal, xTest, yTest)
     plotModelsErrors(errors,models)
 
 main()

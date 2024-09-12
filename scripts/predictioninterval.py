@@ -30,7 +30,7 @@ def main():
     selectedFloatCols = ["Longitude", "Latitude", "Speed", "RSRP","RSRQ","SNR"]
     selectedCatCols = ["CellID"]
 
-    dataX, dataY = processData(df, selectedFloatCols,selectedCatCols, dependentCol)
+    dataX, dataY = processData(df, selectedFloatCols,selectedCatCols, dependentCol, True)
 
 
     ### DIVIDE INTO TRAINING, VALIDATION AND TEST ###

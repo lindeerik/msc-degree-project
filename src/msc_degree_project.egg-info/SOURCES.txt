@@ -5,3 +5,6 @@ src/msc_degree_project.egg-info/SOURCES.txt
 src/msc_degree_project.egg-info/dependency_links.txt
 src/msc_degree_project.egg-info/top_level.txt
 src/visualization/visualize.py
+tests/test_data_loader.py
+tests/test_model.py
+tests/test_pinball.py

@@ -10,10 +10,10 @@ def getBestFeatures(df, floatCols, catCols, dependentCol, model, trainSize = 0.7
     scoreDiff = 1.
     while scoreDiff > 0 and len(selectedFloatCols) > 1:
         worseFloatCol, score = dropWorseFeature(df, selectedFloatCols, catCols, dependentCol, model, trainSize, isBinaryEncoding)
-        selectedFloatCols.remove(worseFloatCol)
         scoreDiff = score - prevScore
         prevScore = score
-        print(scoreDiff, worseFloatCol)
+        if scoreDiff > 0:
+            selectedFloatCols.remove(worseFloatCol)
     
     return selectedFloatCols
 
@@ -25,7 +25,8 @@ def dropWorseFeature(df, floatCols, catCols, dependentCol, model, trainSize = 0.
     for floatCol in floatCols:
         model.fit(xTrain.drop(floatCol, axis=1), yTrain)
         score = -model.getMse(xTest.drop(floatCol, axis=1), yTest)
-        scores.append(-score)
+        scores.append(score)
     
-    idxWorse = np.argmin(scores)
-    return floatCols[idxWorse], scores[idxWorse]
+    # worst feature has best performance in its absence
+    idxWorst = np.argmax(scores)
+    return floatCols[idxWorst], scores[idxWorst]

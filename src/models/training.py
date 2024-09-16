@@ -1,7 +1,6 @@
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import mean_squared_error, r2_score
-
-from models.model import Model
+"""
+Training of point-estimation models
+"""
 
 
 def trainModels(models, xTrain, yTrain, xVal, yVal, xTest, yTest):

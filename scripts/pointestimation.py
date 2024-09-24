@@ -15,7 +15,8 @@ from skorch import NeuralNetRegressor
 import xgboost as xgb
 
 from visualization.visualize import plotModelsErrors
-from data.data_loader import loadDataParquet, processData
+from data.data_loader import loadDataParquet
+from data.data_processing import processData
 from models.training import trainModels
 from models.model import Model
 from models.neuralnetwork.architecture import ThroughputPredictor

@@ -4,7 +4,7 @@ Functions for drop-out feature selection
 
 import numpy as np
 from sklearn.model_selection import train_test_split
-from data.data_loader import processData
+from data.data_processing import processData
 
 
 def getBestFeatures(

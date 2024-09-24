@@ -1,7 +1,6 @@
 appnope==0.1.4
 astroid==3.2.4
 asttokens==2.4.1
-black==24.8.0
 category-encoders==2.6.3
 click==8.1.7
 comm==0.2.2
@@ -32,7 +31,7 @@ matplotlib==3.9.2
 matplotlib-inline==0.1.7
 mccabe==0.7.0
 mpmath==1.3.0
--e git+https://github.com/lindeerik/msc-degree-project.git@4558dde77c267800057a7e5880ab8f304deb7b09#egg=msc_degree_project
+-e git+https://github.com/lindeerik/msc-degree-project.git@4dc091066b726aba5f3486928b7869f269e715c1#egg=msc_degree_project
 mypy-extensions==1.0.0
 nest-asyncio==1.6.0
 networkx==3.2.1

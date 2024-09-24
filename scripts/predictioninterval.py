@@ -13,7 +13,8 @@ from skorch import NeuralNetRegressor
 # Random Forest Quantile
 from sklearn_quantile import RandomForestQuantileRegressor
 
-from data.data_loader import loadDataParquet, processData
+from data.data_loader import loadDataParquet
+from data.data_processing import processData
 from models.model import Model
 from models.neuralnetwork.architecture import ThroughputPredictor
 from models.conformalprediction.conformalizing_scalar import (

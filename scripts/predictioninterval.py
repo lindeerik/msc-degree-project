@@ -4,6 +4,7 @@ Data loading for tabular data
 
 # Sci-kit
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
 
 # Torch
 from torch import optim
@@ -15,18 +16,22 @@ from sklearn_quantile import RandomForestQuantileRegressor
 from data.data_loader import loadDataParquet, processData
 from models.model import Model
 from models.neuralnetwork.architecture import ThroughputPredictor
-from models.quantileregression.conformalprediction import (
+from models.conformalprediction.conformalizing_scalar import (
+    ConformalizingScalarPredictor,
+)
+from models.conformalprediction.quantile_regression import (
     ConformalizedQuantileRegressor,
     QuantileRegressorNeuralNet,
     QuantileRegressorRandomForest,
 )
-from models.quantileregression.pinball import (
+from models.conformalprediction.pinball import (
     PinballLoss,
     pinballLossScorer,
     doublePinballLossScorer,
 )
 
 
+# pylint: disable-msg=too-many-locals
 def main():
     dirParquet = "data/intermediate/"
     df = loadDataParquet(dirParquet)
@@ -123,19 +128,44 @@ def main():
         quantileForestRegressor
     )
 
+    ### RANDOM FOREST CONFORMALIZING SCALAR PREDICTOR ###
+    rfBase = RandomForestRegressor(random_state=42)
+    paramGridRfBase = {
+        "n_estimators": [300],
+        "max_depth": [20],
+        "min_samples_split": [5],
+        "min_samples_leaf": [2],
+        "max_features": ["sqrt"],
+    }
+
+    rfError = RandomForestRegressor(random_state=42)
+    paramGridRfError = {
+        "n_estimators": [300],
+        "max_depth": [20],
+        "min_samples_split": [5],
+        "min_samples_leaf": [2],
+        "max_features": ["sqrt"],
+    }
+    baseModel = Model(rfBase, "Random Forest", paramGridRfBase)
+    errorModel = Model(rfError, "Random Forest Error", paramGridRfError)
+
+    conformalizingScalar = ConformalizingScalarPredictor(baseModel, errorModel, alpha)
+
     ### TRAINING ###
-    conformalQuantileRegressors = [
+    conformalPredictors = [
         conformalQuantileForestRegressor,
         conformalQuantileNeuralNetRegressor,
+        conformalizingScalar,
     ]
-    for conformalModel in conformalQuantileRegressors:
+    for conformalModel in conformalPredictors:
         conformalModel.fit(xTrain, yTrain, xVal, yVal, 2)
 
     ### EVALUATION ###
-    for conformalModel in conformalQuantileRegressors:
-        print(
-            f"{conformalModel.getQuantileRegressor().getName()} coverage: {conformalModel.getQuantileRegressor().getCoverageRatio(xTest, yTest)}"
-        )
+    for conformalModel in conformalPredictors:
+        if "Quantile" in conformalModel.getName():
+            print(
+                f"{conformalModel.getQuantileRegressor().getName()} coverage: {conformalModel.getQuantileRegressor().getCoverageRatio(xTest, yTest)}"
+            )
         print(
             f"{conformalModel.getName()} coverage: {conformalModel.getCoverageRatio(xTest, yTest)}"
         )

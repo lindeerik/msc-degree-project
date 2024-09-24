@@ -6,7 +6,7 @@ import pytest
 
 # pylint: disable=protected-access
 
-from models.quantileregression.pinball import (
+from models.conformalprediction.pinball import (
     negPinballLossValue,
     pinballLossScorer,
     doublePinballLossScorer,

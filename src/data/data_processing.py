@@ -2,10 +2,10 @@
 Data processing for tabular data
 """
 
+from datetime import date
 import numpy as np
 import pandas as pd
 import category_encoders as ce
-from datetime import date
 
 
 def processData(
@@ -38,7 +38,7 @@ def processData(
 
 def transformTimestamp(df, timestampCol, timeOfDayCol=None, timeOfYearCol=None):
     if (not timeOfDayCol) and (not timeOfYearCol):
-        return
+        return df
     if timeOfDayCol:
         df[timeOfDayCol] = df[timestampCol].apply(readTimeOfDayFromTimestamp)
     if timeOfYearCol:

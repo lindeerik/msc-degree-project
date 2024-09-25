@@ -31,7 +31,7 @@ matplotlib==3.9.2
 matplotlib-inline==0.1.7
 mccabe==0.7.0
 mpmath==1.3.0
--e git+https://github.com/lindeerik/msc-degree-project.git@d798f0af1d90ca3117a460816e5870b8ce801120#egg=msc_degree_project
+-e git+https://github.com/lindeerik/msc-degree-project.git@8b019158d7162603c4fc5d1b4515ff66626078e3#egg=msc_degree_project
 mypy-extensions==1.0.0
 nest-asyncio==1.6.0
 networkx==3.2.1

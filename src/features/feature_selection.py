@@ -4,8 +4,7 @@ Functions for drop-out feature selection
 
 from abc import ABC, abstractmethod
 import numpy as np
-from sklearn.model_selection import train_test_split
-from data.data_processing import processData
+from data.data_processing import processData, trainTestSplit
 
 
 class SequentialFeatureSelector(ABC):
@@ -65,8 +64,8 @@ class SequentialFeatureSelector(ABC):
             self.dependentCol,
             self.isBinaryEncoding,
         )
-        xTrain, xTest, yTrain, yTest = train_test_split(
-            dataX, dataY, test_size=1 - self.trainSize
+        xTrain, xTest, yTrain, yTest = trainTestSplit(
+            dataX, dataY, self.trainSize, randomState=42
         )
         scoresFloat = []
         for floatCol in availablefFloatCols:
@@ -131,8 +130,8 @@ class SequentialFeatureSelector(ABC):
             self.dependentCol,
             self.isBinaryEncoding,
         )
-        xTrain, xTest, yTrain, yTest = train_test_split(
-            dataX, dataY, test_size=1 - self.trainSize
+        xTrain, xTest, yTrain, yTest = trainTestSplit(
+            dataX, dataY, self.trainSize, randomState=42
         )
         return xTrain, xTest, yTrain, yTest
 
@@ -161,8 +160,8 @@ class BackwardFeatureSelector(SequentialFeatureSelector):
             self.dependentCol,
             self.isBinaryEncoding,
         )
-        xTrain, xTest, yTrain, yTest = train_test_split(
-            dataX, dataY, test_size=1 - self.trainSize
+        xTrain, xTest, yTrain, yTest = trainTestSplit(
+            dataX, dataY, self.trainSize, randomState=42
         )
         return self.trainModelAndGetScore(xTrain, xTest, yTrain, yTest)
 

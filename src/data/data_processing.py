@@ -6,6 +6,7 @@ from datetime import date
 import numpy as np
 import pandas as pd
 import category_encoders as ce
+from sklearn.model_selection import train_test_split
 
 
 def processData(
@@ -34,6 +35,27 @@ def processData(
     dataY = df[dependentCol].astype(np.float32)
 
     return dataX, dataY
+
+
+def trainTestSplit(dataX, dataY, trainSize=0.8, randomState=None):
+    xTrain, xTest, yTrain, yTest = train_test_split(
+        dataX, dataY, test_size=1 - trainSize, random_state=randomState
+    )
+    return xTrain, xTest, yTrain, yTest
+
+
+def trainValTestSplit(dataX, dataY, trainSize=0.7, valSize=0.15, randomState=None):
+    testSize = 1 - trainSize - valSize
+    xTrain, xTest, yTrain, yTest = train_test_split(
+        dataX, dataY, test_size=1 - trainSize, random_state=randomState
+    )
+    xVal, xTest, yVal, yTest = train_test_split(
+        xTest,
+        yTest,
+        test_size=testSize / (testSize + valSize),
+        random_state=randomState,
+    )
+    return xTrain, xVal, xTest, yTrain, yVal, yTest
 
 
 def transformTimestamp(df, timestampCol, timeOfDayCol=None, timeOfYearCol=None):

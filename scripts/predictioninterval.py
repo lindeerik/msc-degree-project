@@ -3,7 +3,6 @@ Data loading for tabular data
 """
 
 # Sci-kit
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 
 # Torch
@@ -14,7 +13,7 @@ from skorch import NeuralNetRegressor
 from sklearn_quantile import RandomForestQuantileRegressor
 
 from data.data_loader import loadDataParquet
-from data.data_processing import processData
+from data.data_processing import processData, trainValTestSplit
 from models.model import Model
 from models.neuralnetwork.architecture import ThroughputPredictor
 from models.conformalprediction.conformalizing_scalar import (
@@ -48,15 +47,11 @@ def main():
     )
 
     ### DIVIDE INTO TRAINING, VALIDATION AND TEST ###
-    train_ratio = 0.75
-    validation_ratio = 0.15
-    test_ratio = 0.10
+    trainRatio = 0.75
+    validatioRatio = 0.15
 
-    xTrain, xTest, yTrain, yTest = train_test_split(
-        dataX, dataY, test_size=1 - train_ratio
-    )
-    xVal, xTest, yVal, yTest = train_test_split(
-        xTest, yTest, test_size=test_ratio / (test_ratio + validation_ratio)
+    xTrain, xVal, xTest, yTrain, yVal, yTest = trainValTestSplit(
+        dataX, dataY, trainRatio, validatioRatio
     )
 
     ### NEURAL NET QUANTILE REGRESSOR ###

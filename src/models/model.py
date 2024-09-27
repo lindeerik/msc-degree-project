@@ -26,18 +26,22 @@ class Model:
                 "Warning: no parameter grid provided. Defaulting to normal model fit."
             )
             self.fit(X, Y)
-            return
-        grid_search = GridSearchCV(
-            estimator=self.__model,
-            param_grid=self.__paramGrid,
-            cv=folds,
-            n_jobs=-1,
-            scoring=self.__scorer,
-            verbose=1,
-        )
-        grid_search.fit(X.values, Y.values.ravel())
-        self.__model = grid_search.best_estimator_
-        self.__bestParams = grid_search.best_params_
+        elif getCombinationsOfGridParameters(self.__paramGrid) == 1:
+            params = {key: value[0] for key, value in self.__paramGrid.items()}
+            self.__model.set_params(**params)
+            self.fit(X, Y)
+        else:
+            grid_search = GridSearchCV(
+                estimator=self.__model,
+                param_grid=self.__paramGrid,
+                cv=folds,
+                n_jobs=-1,
+                scoring=self.__scorer,
+                verbose=1,
+            )
+            grid_search.fit(X.values, Y.values.ravel())
+            self.__model = grid_search.best_estimator_
+            self.__bestParams = grid_search.best_params_
 
     def getMse(self, X, Y):
         yPred = self.predict(X)
@@ -52,3 +56,10 @@ class Model:
 
     def getName(self):
         return self.__name
+
+
+def getCombinationsOfGridParameters(paramGrid):
+    numCombinations = 1
+    for _, value in paramGrid.items():
+        numCombinations *= len(value)
+    return numCombinations

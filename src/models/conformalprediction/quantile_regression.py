@@ -77,10 +77,12 @@ class ConformalizedQuantileRegressor:
         return self._quantileRegressor
 
     def getCoverageRatio(self, X, Y):
-        return np.mean((self.predict(X)[0] <= Y) & (Y <= self.predict(X)[1]))
+        yPred = self.predict(X)
+        return np.mean((yPred[0] <= Y) & (Y <= yPred[1]))
 
     def getAverageIntervalWidth(self, X):
-        return np.mean(self.predict(X)[1] - self.predict(X)[0])
+        yPred = self.predict(X)
+        return np.mean(yPred[1] - yPred[0])
 
     def getName(self):
         if self._quantileRegressor.getName() == "":

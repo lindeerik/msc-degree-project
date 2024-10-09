@@ -11,9 +11,10 @@ def main():
     df = dfRaw.dropna(axis=1, how="all")
 
     # drop rows due to stops in iperf test at 11:40, 11:55, 12:22, 12:35
-    # also iperf testing ends at 12:44
+    # also iperf testing began 10 points late and ends at 12:44
     indicesToDropTestStops = (
-        list(range(2160, 2176))
+        list(range(0, 10))
+        + list(range(2160, 2176))
         + list(range(3939, 3949))
         + list(range(6508, 6553))
         + list(range(8063, 8084))

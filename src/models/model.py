@@ -15,10 +15,10 @@ class Model:
         self.__scorer = scorer
 
     def predict(self, X):
-        return self.__model.predict(X.values)
+        return self.__model.predict(X)
 
     def fit(self, X, Y):
-        self.__model.fit(X.values, Y.values.ravel())
+        self.__model.fit(X, Y.values.ravel())
 
     def gridSearchFit(self, X, Y, folds):
         if self.__paramGrid is None:
@@ -39,7 +39,7 @@ class Model:
                 scoring=self.__scorer,
                 verbose=1,
             )
-            grid_search.fit(X.values, Y.values.ravel())
+            grid_search.fit(X, Y.values.ravel())
             self.__model = grid_search.best_estimator_
             self.__bestParams = grid_search.best_params_
 

@@ -4,7 +4,7 @@ Functions for drop-out feature selection
 
 from abc import ABC, abstractmethod
 import numpy as np
-from data.data_processing import processData, trainTestSplit
+from data.data_processing import processData, getDataProcessor, trainTestSplit
 
 
 class SequentialFeatureSelector(ABC):
@@ -55,36 +55,24 @@ class SequentialFeatureSelector(ABC):
         return self.getSelectedCols(availableFloatCols, availableCatCols)
 
     def getNextFeature(self, availablefFloatCols, availableCatCols):
-        # iterate over float features which can have same encoding and split
-        _, selectedCatCols = self.getSelectedCols(availablefFloatCols, availableCatCols)
-        dataX, dataY = processData(
-            self.df,
-            self.floatCols,
-            selectedCatCols,
-            self.dependentCol,
-            self.isBinaryEncoding,
-        )
-        xTrain, xTest, yTrain, yTest = trainTestSplit(
-            dataX, dataY, self.trainSize, randomState=42
-        )
+        # iterate over float features
         scoresFloat = []
         for floatCol in availablefFloatCols:
-            xTrainMod, xTestMod = self.getModifiedDataForFloat(
-                xTrain, xTest, availablefFloatCols, floatCol
+            xTrain, xTest, yTrain, yTest = self.getModifiedData(
+                availablefFloatCols, availableCatCols, selectedFloatCol=floatCol
             )
-            score = self.trainModelAndGetScore(
-                xTrainMod,
-                xTestMod,
-                yTrain,
-                yTest,
-            )
-            scoresFloat.append(score)
+            # binary encoding may remove columns with only one value
+            if xTrain.shape[1] == 0:
+                scoresFloat.append(-np.inf)
+            else:
+                score = self.trainModelAndGetScore(xTrain, xTest, yTrain, yTest)
+                scoresFloat.append(score)
         idxFloat = np.argmax(scoresFloat) if len(scoresFloat) > 0 else None
-        # iterate over categorical features which need new encoding
+        # iterate over categorical features
         scoresCat = []
         for catCol in availableCatCols:
-            xTrain, xTest, yTrain, yTest = self.getModifiedDataForCat(
-                availablefFloatCols, availableCatCols, catCol
+            xTrain, xTest, yTrain, yTest = self.getModifiedData(
+                availablefFloatCols, availableCatCols, selectedCatCol=catCol
             )
             # binary encoding may remove columns with only one value
             if xTrain.shape[1] == 0:
@@ -113,22 +101,27 @@ class SequentialFeatureSelector(ABC):
     ):
         pass
 
-    @abstractmethod
-    def getModifiedDataForFloat(self, xTrain, xTest, availableFloatCols, floatCol):
-        pass
-
-    def getModifiedDataForCat(
-        self, availableFloatCols, availableCatCols, selectedCatCol
+    def getModifiedData(
+        self,
+        availableFloatCols,
+        availableCatCols,
+        selectedFloatCol=None,
+        selectedCatCol=None,
     ):
         selectedFloatCols, selectedCatCols = self.getSelectedCols(
-            availableFloatCols, availableCatCols, catCol=selectedCatCol
+            availableFloatCols,
+            availableCatCols,
+            floatCol=selectedFloatCol,
+            catCol=selectedCatCol,
         )
-        dataX, dataY = processData(
-            self.df,
+        processor = getDataProcessor(
             selectedFloatCols,
             selectedCatCols,
-            self.dependentCol,
-            self.isBinaryEncoding,
+            applyScaler=True,
+            binaryEncoding=self.isBinaryEncoding,
+        )
+        dataX, dataY = processData(
+            self.df, selectedFloatCols, selectedCatCols, self.dependentCol, processor
         )
         xTrain, xTest, yTrain, yTest = trainTestSplit(
             dataX, dataY, self.trainSize, randomState=42
@@ -153,12 +146,14 @@ class SequentialFeatureSelector(ABC):
 class BackwardFeatureSelector(SequentialFeatureSelector):
 
     def getBaselineScore(self):
-        dataX, dataY = processData(
-            self.df,
+        processor = getDataProcessor(
             self.floatCols,
             self.catCols,
-            self.dependentCol,
-            self.isBinaryEncoding,
+            applyScaler=True,
+            binaryEncoding=self.isBinaryEncoding,
+        )
+        dataX, dataY = processData(
+            self.df, self.floatCols, self.catCols, self.dependentCol, processor
         )
         xTrain, xTest, yTrain, yTest = trainTestSplit(
             dataX, dataY, self.trainSize, randomState=42
@@ -176,13 +171,6 @@ class BackwardFeatureSelector(SequentialFeatureSelector):
             selectedCatCols.remove(catCol)
         return selectedFloatCols, selectedCatCols
 
-    def getModifiedDataForFloat(self, xTrain, xTest, availableFloatCols, floatCol):
-        floatColsDrop = [x for x in self.floatCols if x not in availableFloatCols]
-        floatColsDrop.append(floatCol)
-        xTrainMod = xTrain.drop(floatColsDrop, axis=1)
-        xTestMod = xTest.drop(floatColsDrop, axis=1)
-        return xTrainMod, xTestMod
-
 
 class ForwardFeatureSelector(SequentialFeatureSelector):
 
@@ -199,10 +187,3 @@ class ForwardFeatureSelector(SequentialFeatureSelector):
         if catCol is not None:
             selectedCatCols.append(catCol)
         return selectedFloatCols, selectedCatCols
-
-    def getModifiedDataForFloat(self, xTrain, xTest, availableFloatCols, floatCol):
-        floatColsDrop = availableFloatCols.copy()
-        floatColsDrop.remove(floatCol)
-        xTrainMod = xTrain.drop(floatColsDrop, axis=1)
-        xTestMod = xTest.drop(floatColsDrop, axis=1)
-        return xTrainMod, xTestMod

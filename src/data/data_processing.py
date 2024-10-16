@@ -4,37 +4,58 @@ Data processing for tabular data
 
 from datetime import date
 import numpy as np
-import pandas as pd
 import category_encoders as ce
+from sklearn.compose import ColumnTransformer
+from sklearn.decomposition import PCA
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
 
-def processData(
-    df, selectedFloatCols, selectedCatCols, dependentCol, binaryEncoding=True
-):
-    selectedCols = selectedFloatCols + selectedCatCols
-    selectedCols.append(dependentCol)
+def processData(df, selectedFloatCols, selectedCatCols, dependentCol, processor=None):
+    selectedCols = selectedFloatCols + selectedCatCols + [dependentCol]
     df = df[selectedCols].dropna()
 
-    encoder = (
+    processor = (
+        getDataProcessor(selectedFloatCols, selectedCatCols)
+        if processor is None
+        else processor
+    )
+
+    dataX = processor.fit_transform(df[selectedFloatCols + selectedCatCols]).astype(
+        np.float32
+    )
+    dataY = df[dependentCol].astype(np.float32)
+
+    return dataX, dataY
+
+
+def getDataProcessor(
+    selectedFloatCols,
+    selectedCatCols,
+    binaryEncoding=True,
+    applyScaler=False,
+    applyPCA=False,
+):
+    steps = []
+    if applyScaler:
+        steps.append(("scaler", StandardScaler()))
+    if applyPCA:
+        steps.append(("pca", PCA()))
+    numTransformer = Pipeline(steps=steps) if len(steps) > 0 else "passthrough"
+
+    catTransformer = (
         ce.BinaryEncoder(cols=selectedCatCols, drop_invariant=True)
         if binaryEncoding
         else ce.OneHotEncoder(cols=selectedCatCols, drop_invariant=True)
     )
-    encoded = encoder.fit_transform(df[selectedCatCols])
-    catData = encoded.reset_index(drop=True)
-
-    # z-score normalization
-    floatDataUnnormalized = df.drop(
-        selectedCatCols + [dependentCol], axis=1
-    ).reset_index(drop=True)
-    floatData = (
-        floatDataUnnormalized - floatDataUnnormalized.mean()
-    ) / floatDataUnnormalized.std()
-    dataX = pd.concat([floatData, catData], axis=1).astype(np.float32)
-    dataY = df[dependentCol].astype(np.float32)
-
-    return dataX, dataY
+    processor = ColumnTransformer(
+        transformers=[
+            ("num", numTransformer, selectedFloatCols),
+            ("cat", catTransformer, selectedCatCols),
+        ]
+    )
+    return processor
 
 
 def trainTestSplit(dataX, dataY, trainSize=0.8, randomState=None):

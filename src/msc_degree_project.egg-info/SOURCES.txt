@@ -21,6 +21,7 @@ src/msc_degree_project.egg-info/top_level.txt
 src/visualization/__init__.py
 src/visualization/visualize.py
 tests/test_data_loader.py
+tests/test_data_processor.py
 tests/test_feature_selection.py
 tests/test_model.py
 tests/test_pinball.py

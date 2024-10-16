@@ -13,7 +13,7 @@ from skorch import NeuralNetRegressor
 from sklearn_quantile import RandomForestQuantileRegressor
 
 from data.data_loader import loadDataParquet
-from data.data_processing import processData, trainValTestSplit
+from data.data_processing import processData, getDataProcessor, trainValTestSplit
 from models.model import Model
 from models.neuralnetwork.architecture import ThroughputPredictor
 from models.conformalprediction.conformalizing_scalar import (
@@ -42,8 +42,9 @@ def main():
     selectedFloatCols = ["Longitude", "Latitude", "Speed", "RSRP", "RSRQ", "SNR"]
     selectedCatCols = ["CellID"]
 
+    processor = getDataProcessor(selectedFloatCols, selectedCatCols, applyScaler=True)
     dataX, dataY = processData(
-        df, selectedFloatCols, selectedCatCols, dependentCol, True
+        df, selectedFloatCols, selectedCatCols, dependentCol, processor
     )
 
     ### DIVIDE INTO TRAINING, VALIDATION AND TEST ###

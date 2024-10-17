@@ -25,12 +25,13 @@ class QuantileRegressor(ABC):
     def predict(self, X):
         pass
 
-    def conformalScore(self, X, Y):
-        yPred = self.predict(X)
-        return np.maximum(yPred[0] - Y, Y - yPred[1])
-
     def getCoverageRatio(self, X, Y):
-        return np.mean((self.predict(X)[0] <= Y) & (Y <= self.predict(X)[1]))
+        yPred = self.predict(X)
+        return np.mean((yPred[0] <= Y) & (Y <= yPred[1]))
+
+    def getAverageIntervalWidth(self, X):
+        yPred = self.predict(X)
+        return np.mean(yPred[1] - yPred[0])
 
     def getAlpha(self):
         return self._alpha
@@ -52,11 +53,12 @@ class QuantileRegressorRandomForest(QuantileRegressor):
 
 
 class ConformalizedQuantileRegressor:
-    def __init__(self, quantileRegressor):
+    def __init__(self, quantileRegressor, scaling=None):
         self._quantileRegressor = quantileRegressor
-        self._conformalScoreFunc = quantileRegressor.conformalScore
+        self._conformalScoreFunc = self.conformalScore
         self._alpha = quantileRegressor.getAlpha()
         self._conformalQuantileScore = None
+        self._scalingFunc = self.getScalingFunc(scaling)
 
     def fit(self, xTrain, yTrain, xVal, yVal, folds=5):
         self._quantileRegressor.fit(xTrain, yTrain, folds)
@@ -68,13 +70,31 @@ class ConformalizedQuantileRegressor:
 
     def predict(self, X):
         intervals = self._quantileRegressor.predict(X)
+        scaling = self._scalingFunc(X)
         return [
-            intervals[0] - self._conformalQuantileScore,
-            intervals[1] + self._conformalQuantileScore,
+            intervals[0] - self._conformalQuantileScore * scaling,
+            intervals[1] + self._conformalQuantileScore * scaling,
         ]
 
     def getQuantileRegressor(self):
         return self._quantileRegressor
+
+    def conformalScore(self, X, Y):
+        yPred = self._quantileRegressor.predict(X)
+        scaling = self._scalingFunc(X)
+        return np.maximum((yPred[0] - Y) / scaling, (Y - yPred[1]) / scaling)
+
+    def quantilePredIntervalLength(self, X):
+        yPred = self._quantileRegressor.predict(X)
+        return yPred[1] - yPred[0]
+
+    def identityScaling(self, _):
+        return 1
+
+    def getScalingFunc(self, scaling):
+        if scaling == "interval_width_scaling":
+            return self.quantilePredIntervalLength
+        return self.identityScaling
 
     def getCoverageRatio(self, X, Y):
         yPred = self.predict(X)

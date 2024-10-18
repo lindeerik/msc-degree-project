@@ -53,12 +53,13 @@ class QuantileRegressorRandomForest(QuantileRegressor):
 
 
 class ConformalizedQuantileRegressor:
-    def __init__(self, quantileRegressor, scaling=None):
+    def __init__(self, quantileRegressor, scaling=None, name = ""):
         self._quantileRegressor = quantileRegressor
         self._conformalScoreFunc = self.conformalScore
         self._alpha = quantileRegressor.getAlpha()
         self._conformalQuantileScore = None
         self._scalingFunc = self.getScalingFunc(scaling)
+        self._name = name
 
     def fit(self, xTrain, yTrain, xVal, yVal, folds=5):
         self._quantileRegressor.fit(xTrain, yTrain, folds)
@@ -105,6 +106,8 @@ class ConformalizedQuantileRegressor:
         return np.mean(yPred[1] - yPred[0])
 
     def getName(self):
-        if self._quantileRegressor.getName() == "":
-            return ""
-        return "Conformalized " + self._quantileRegressor.getName()
+        if self._name != "":
+            return self._name
+        if self._quantileRegressor.getName() != "":
+            return "Conformalized " + self._quantileRegressor.getName()
+        return ""

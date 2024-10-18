@@ -3,12 +3,13 @@ from models.conformalprediction.quantile_regression import getConformalQuantileS
 
 
 class ConformalizingScalarPredictor:
-    def __init__(self, baseModel, errorModel, alpha):
+    def __init__(self, baseModel, errorModel, alpha, name = ""):
         self._baseModel = baseModel
         self._errorModel = errorModel
         self._conformalScoreFunc = self.getConformalScoreFunc()
         self._alpha = alpha
         self._conformalQuantileScore = None
+        self._name = name
 
     def predict(self, X):
         yPred = self._baseModel.predict(X)
@@ -44,6 +45,8 @@ class ConformalizingScalarPredictor:
         return np.mean(yPred[1] - yPred[0])
 
     def getName(self):
-        if self._baseModel.getName() == "":
-            return ""
-        return "Conformalized Scalar " + self._baseModel.getName()
+        if self._name != "":
+            return self._name
+        if  self._baseModel.getName() != "":
+            return "Conformalized Scalar " + self._baseModel.getName()
+        return ""

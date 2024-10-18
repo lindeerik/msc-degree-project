@@ -13,7 +13,7 @@ from skorch import NeuralNetRegressor
 # xg-boost
 import xgboost as xgb
 
-from visualization.visualize import plotModelsErrors
+from visualization.plots import plotModelsErrors
 from data.data_loader import loadDataParquet
 from data.data_processing import processData, getDataProcessor, trainValTestSplit
 from models.training import trainModels

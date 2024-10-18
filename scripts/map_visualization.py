@@ -1,12 +1,14 @@
 """
 Map visualization for uplink throughput
 """
+
 import pandas as pd
 import geopandas as gpd
+import matplotlib.pyplot as plt
 
 from data.data_loader import loadDataCsv
 from data.data_processing import transformTimestamp
-from visualization.visualize import plotFloatMap, plotCategoricalMap
+from visualization.maps import plotFloatMap, plotCategoricalMap
 
 
 def stockholmSodertaljeVisualization():
@@ -120,6 +122,7 @@ def main():
     stockholmSodertaljeVisualization()
     # ooklaE4Visualization()
     # ooklaI45Visualization()
+    plt.show()
 
 
 main()

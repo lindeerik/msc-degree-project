@@ -5,29 +5,24 @@ Script for investigating feature selection
 from sklearn.ensemble import RandomForestRegressor
 
 
-from data.data_loader import loadDataParquet
+from data.data_loader import loadDataCsv
 from data.data_processing import transformTimestamp
 from models.model import Model
 from features.feature_selection import BackwardFeatureSelector, ForwardFeatureSelector
 
 
 def main():
-    dirParquet = "data/intermediate/"
-    df = loadDataParquet(dirParquet)
+    dirCsv = "data/intermediate/sthlm-sodertalje/"
+    df = loadDataCsv(dirCsv, "")
     df = transformTimestamp(df, "Timestamp", timeOfDayCol="Time_of_day")
 
-    dependentCol = "DL_bitrate"
+    dependentCol = "UL_bitrate"
     selectedFloatCols = [
         "Longitude",
         "Latitude",
         "Speed",
-        "RSRP",
-        "RSRQ",
-        "RSSI",
         "SNR",
         "CQI",
-        "NRxRSRP",
-        "NRxRSRQ",
         "Time_of_day",
     ]
     selectedCatCols = [

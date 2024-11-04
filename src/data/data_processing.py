@@ -12,7 +12,14 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
 
-def processData(df, selectedFloatCols, selectedCatCols, dependentCol, processor=None):
+def processData(
+    df,
+    selectedFloatCols,
+    selectedCatCols,
+    dependentCol,
+    processor=None,
+    fitProcessor=True,
+):
     selectedCols = selectedFloatCols + selectedCatCols + [dependentCol]
     df = df[selectedCols].dropna()
 
@@ -22,7 +29,9 @@ def processData(df, selectedFloatCols, selectedCatCols, dependentCol, processor=
         else processor
     )
 
-    dataX = processor.fit_transform(df[selectedFloatCols + selectedCatCols]).astype(
+    if fitProcessor:
+        processor.fit(df[selectedFloatCols + selectedCatCols])
+    dataX = processor.transform(df[selectedFloatCols + selectedCatCols]).astype(
         np.float32
     )
     dataY = df[dependentCol].astype(np.float32)

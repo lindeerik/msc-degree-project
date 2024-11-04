@@ -18,6 +18,10 @@ class Model:
         return self.__model.predict(X)
 
     def fit(self, X, Y):
+        # if param grid available, take first combination of params
+        if self.__paramGrid:
+            params = {key: value[0] for key, value in self.__paramGrid.items()}
+            self.__model.set_params(**params)
         self.__model.fit(X, Y.values.ravel())
 
     def gridSearchFit(self, X, Y, folds):
@@ -25,11 +29,11 @@ class Model:
             print(
                 "Warning: no parameter grid provided. Defaulting to normal model fit."
             )
-            self.fit(X, Y)
+            self.__model.fit(X, Y.values.ravel())
         elif getCombinationsOfGridParameters(self.__paramGrid) == 1:
             params = {key: value[0] for key, value in self.__paramGrid.items()}
             self.__model.set_params(**params)
-            self.fit(X, Y)
+            self.__model.fit(X, Y.values.ravel())
         else:
             grid_search = GridSearchCV(
                 estimator=self.__model,

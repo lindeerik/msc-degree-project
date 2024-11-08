@@ -2,6 +2,8 @@
 Model wrapper for scikit-learn, xgboost, and skorch
 """
 
+import pickle
+
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import mean_squared_error, r2_score
 
@@ -60,6 +62,22 @@ class Model:
 
     def getName(self):
         return self.__name
+
+    def getModel(self):
+        return self.__model
+
+    def getMetadata(self):
+        metadata = {
+            "name": self.__name,
+            "type": str(type(self.__model)),
+            "parameter_grid": self.__paramGrid,
+            "parameters": self.__model.get_params(),
+        }
+        return metadata
+
+    def saveModel(self, modelPath):
+        with open(modelPath, "wb") as f:
+            pickle.dump(self.__model, f)
 
 
 def getCombinationsOfGridParameters(paramGrid):

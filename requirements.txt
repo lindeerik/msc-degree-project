@@ -43,7 +43,7 @@ matplotlib-inline==0.1.7
 mccabe==0.7.0
 mercantile==1.2.1
 mpmath==1.3.0
--e git+https://github.com/lindeerik/msc-degree-project.git@a2017c4998937b74db437d953ce28c8c31083b60#egg=msc_degree_project
+-e git+https://github.com/lindeerik/msc-degree-project.git@f8fc9c4c38b69a02b39ecaa8cc2144cece04d4dd#egg=msc_degree_project
 mypy-extensions==1.0.0
 nest-asyncio==1.6.0
 networkx==3.2.1

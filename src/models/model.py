@@ -71,7 +71,7 @@ class Model:
             "name": self.__name,
             "type": str(type(self.__model)),
             "parameter_grid": self.__paramGrid,
-            "parameters": self.__model.get_params(),
+            "parameters": str(self.__model.get_params()),
         }
         return metadata
 

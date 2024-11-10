@@ -22,13 +22,13 @@ from data.data_processing import (
     trainTestSplit,
     transformTimestamp,
 )
-from data.data_saver import saveCsvWithDateTime
+from data.data_saver import saveExperimentData
 from models.model import Model
 from models.neuralnetwork.architecture import ThroughputPredictor
 
 
 def main():
-    saveDir = "data/results/point-estimation/"
+    saveDir = "experiments/point-estimation/"
     modelCol = "Model"
     trainRatioCol = "Train ratio"
     samplesCol = "Number of Samples"
@@ -46,17 +46,10 @@ def main():
     ]
     trainRatios = [0.7, 0.8, 0.9]
     numTrials = 20
-    runTrialsAndSaveCsv(cols, trainRatios, numTrials, saveDir)
-
-
-def runTrialsAndSaveCsv(cols, trainRatios, numTrials, saveDir, verbose=True):
-    df = runTrials(cols, trainRatios, numTrials, verbose)
-    saveCsvWithDateTime(df, saveDir)
-    return df
-
+    runTrialsAndSaveData(cols, trainRatios, numTrials, saveDir)
 
 # pylint: disable-msg=too-many-locals, too-many-statements
-def runTrials(cols, trainRatios, numTrials, verbose=True):
+def runTrialsAndSaveData(cols, trainRatios, numTrials, saveDir, verbose=True):
     dirCsv = "data/intermediate/sthlm-sodertalje/"
     df = loadDataCsv(dirCsv, "")
 
@@ -156,7 +149,15 @@ def runTrials(cols, trainRatios, numTrials, verbose=True):
             print(f"Completed {completedShare*100:.2f}% of trials")
 
     df = pd.DataFrame(data, columns=cols)
-    return df
+    saveExperimentData(
+        df,
+        saveDir,
+        "point_estimation_trials",
+        selectedFloatCols,
+        selectedCatCols,
+        models,
+        "",
+    )
 
 
 def addMetricsToList(data, model, name, trainRatio, samples, testSamples, xTest, yTest):

@@ -4,6 +4,7 @@ Data loading for tabular data
 
 import glob
 import os
+import pickle
 
 import pandas as pd
 
@@ -35,10 +36,6 @@ def loadDataParquet(filePath):
     return pd.concat(dataFrames, axis=0, ignore_index=True)
 
 
-def saveDataParquet(dirCsv, dirParquet, emptyData=""):
-    fileNames = glob.glob(os.path.join(dirCsv, "*.csv"))
-
-    for fileName in fileNames:
-        df = pd.read_csv(fileName, index_col=None, header=0, na_values=emptyData)
-        fileNameParquet = os.path.basename(fileName.replace("csv", "parquet"))
-        df.to_parquet(dirParquet + fileNameParquet, engine="pyarrow")
+def loadModel(modelPath):
+    with open(modelPath, "rb") as f:
+        return pickle.load(f)

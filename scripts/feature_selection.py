@@ -2,11 +2,13 @@
 Script for investigating feature selection
 """
 
-from sklearn.ensemble import RandomForestRegressor
+import pandas as pd
 
+from sklearn.ensemble import RandomForestRegressor
 
 from data.data_loader import loadDataCsv
 from data.data_processing import transformTimestamp
+from data.data_saver import saveExperimentData
 from models.model import Model
 from features.feature_selection import BackwardFeatureSelector, ForwardFeatureSelector
 
@@ -48,15 +50,31 @@ def main():
     bestFloatCols, bestCatCols = backwardSelector.getBestFeatures(
         df, selectedFloatCols, selectedCatCols, dependentCol
     )
-    print(f"Best float columns: {bestFloatCols}")
-    print(f"Best categorical columns: {bestCatCols}")
+    backwardDf = pd.DataFrame({"Best Columns": bestFloatCols + bestCatCols})
+    saveExperimentData(
+        backwardDf,
+        "experiments/feature-selection/",
+        "backward:feature_selection",
+        selectedFloatCols,
+        selectedCatCols,
+        [model],
+        "",
+    )
 
     forwardSelector = ForwardFeatureSelector(model)
     bestFloatCols, bestCatCols = forwardSelector.getBestFeatures(
         df, selectedFloatCols, selectedCatCols, dependentCol
     )
-    print(f"Best float columns: {bestFloatCols}")
-    print(f"Best categorical columns: {bestCatCols}")
+    forwardDf = pd.DataFrame({"Best Columns": bestFloatCols + bestCatCols})
+    saveExperimentData(
+        forwardDf,
+        "experiments/feature-selection/",
+        "forward_feature_selection",
+        selectedFloatCols,
+        selectedCatCols,
+        [model],
+        "",
+    )
 
 
 main()

@@ -3,7 +3,7 @@ from models.conformalprediction.quantile_regression import getConformalQuantileS
 
 
 class ConformalizingScalarPredictor:
-    def __init__(self, baseModel, errorModel, alpha, name = ""):
+    def __init__(self, baseModel, errorModel, alpha, name=""):
         self._baseModel = baseModel
         self._errorModel = errorModel
         self._conformalScoreFunc = self.getConformalScoreFunc()
@@ -47,6 +47,19 @@ class ConformalizingScalarPredictor:
     def getName(self):
         if self._name != "":
             return self._name
-        if  self._baseModel.getName() != "":
+        if self._baseModel.getName() != "":
             return "Conformalized Scalar " + self._baseModel.getName()
         return ""
+
+    def getMetadata(self):
+        metadata = {
+            "alpha": self._alpha,
+            "base_model": self._baseModel.getMetadata(),
+            "error_model": self._errorModel.getMetadata(),
+        }
+        return metadata
+
+    def saveModel(self, modelPath):
+        base, ext = modelPath.rsplit(".", 1)
+        self._baseModel.saveModel(f"{base}_base.{ext}")
+        self._errorModel.saveModel(f"{base}_error.{ext}")

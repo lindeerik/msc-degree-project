@@ -39,6 +39,14 @@ class QuantileRegressor(ABC):
     def getName(self):
         return self._name
 
+    @abstractmethod
+    def getMetadata(self):
+        pass
+
+    @abstractmethod
+    def saveModel(self, modelPath):
+        pass
+
 
 class QuantileRegressorNeuralNet(QuantileRegressor):
     def predict(self, X):
@@ -46,14 +54,33 @@ class QuantileRegressorNeuralNet(QuantileRegressor):
         upperBounds = self._models[1].predict(X)
         return [lowerBounds, upperBounds]
 
+    def getMetadata(self):
+        metadata = {
+            "alpha": self._alpha,
+            "lower_bound_model": self._models[0].getMetadata(),
+            "upper_bound_model": self._models[1].getMetadata(),
+        }
+        return metadata
+
+    def saveModel(self, modelPath):
+        base, ext = modelPath.rsplit(".", 1)
+        self._models[0].saveModel(f"{base}_lower.{ext}")
+        self._models[1].saveModel(f"{base}_upper.{ext}")
+
 
 class QuantileRegressorRandomForest(QuantileRegressor):
     def predict(self, X):
         return self._models[0].predict(X)
 
+    def getMetadata(self):
+        return self._models[0].getMetadata()
+
+    def saveModel(self, modelPath):
+        return self._models[0].saveModel(modelPath)
+
 
 class ConformalizedQuantileRegressor:
-    def __init__(self, quantileRegressor, scaling=None, name = ""):
+    def __init__(self, quantileRegressor, scaling=None, name=""):
         self._quantileRegressor = quantileRegressor
         self._conformalScoreFunc = self.conformalScore
         self._alpha = quantileRegressor.getAlpha()
@@ -111,3 +138,13 @@ class ConformalizedQuantileRegressor:
         if self._quantileRegressor.getName() != "":
             return "Conformalized " + self._quantileRegressor.getName()
         return ""
+
+    def getMetadata(self):
+        metadata = {
+            "scaling": str(self._scalingFunc),
+            "quantile_regressor": self._quantileRegressor.getMetadata(),
+        }
+        return metadata
+
+    def saveModel(self, modelPath):
+        self._quantileRegressor.saveModel(modelPath)

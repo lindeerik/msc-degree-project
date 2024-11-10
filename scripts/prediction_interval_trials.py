@@ -21,7 +21,7 @@ from data.data_processing import (
     trainValTestSplit,
     transformTimestamp,
 )
-from data.data_saver import saveCsvWithDateTime
+from data.data_saver import saveExperimentData
 from models.model import Model
 from models.neuralnetwork.architecture import ThroughputPredictor
 from models.conformalprediction.conformalizing_scalar import (
@@ -40,7 +40,7 @@ from models.conformalprediction.pinball import (
 
 
 def main():
-    saveDir = "data/results/conformal-prediction/"
+    saveDir = "experiments/uncertainty-intervals/"
     modelCol = "Model"
     alphaCol = "Alpha"
     trainRatioCol = "Train ratio"
@@ -63,19 +63,12 @@ def main():
     trainRatios = [0.7, 0.8, 0.9]
     alphas = [0.1, 0.2]
     numTrials = 20
-    runTrialsAndSaveCsv(cols, testRatio, trainRatios, alphas, numTrials, saveDir)
-
-
-def runTrialsAndSaveCsv(
-    cols, testRatio, trainRatios, alphas, numTrials, saveDir, verbose=True
-):
-    df = runTrials(cols, testRatio, trainRatios, alphas, numTrials, verbose)
-    saveCsvWithDateTime(df, saveDir)
-    return df
-
+    runTrialsAndSaveData(cols, testRatio, trainRatios, alphas, numTrials, saveDir)
 
 # pylint: disable-msg=too-many-locals, too-many-statements
-def runTrials(cols, testRatio, trainRatios, alphas, numTrials, verbose=True):
+def runTrialsAndSaveData(
+    cols, testRatio, trainRatios, alphas, numTrials, saveDir, verbose=True
+):
     dirCsv = "data/intermediate/sthlm-sodertalje/"
     df = loadDataCsv(dirCsv, "")
 
@@ -254,7 +247,15 @@ def runTrials(cols, testRatio, trainRatios, alphas, numTrials, verbose=True):
                 print(f"Completed {completedShare*100:.2f}% of trials")
 
     df = pd.DataFrame(data, columns=cols)
-    return df
+    saveExperimentData(
+        df,
+        saveDir,
+        "uncertainty_intervals_trials",
+        selectedFloatCols,
+        selectedCatCols,
+        conformalPredictors,
+        "",
+    )
 
 
 def addMetricsToList(

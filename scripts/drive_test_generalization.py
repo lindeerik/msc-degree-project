@@ -13,6 +13,7 @@ import xgboost as xgb
 
 from data.data_loader import loadCsv
 from data.data_processing import processData, getDataProcessor
+from data.data_saver import saveExperimentData
 from models.model import Model
 from models.neuralnetwork.architecture import ThroughputPredictor
 
@@ -41,9 +42,10 @@ def main():
         "BAND",
         "BANDWIDTH",
     ]
-
+    data = []
+    cols = ["Model", "Index of Drive Test for Testing Data", "Train R2", "Test R2"]
     # Iterate by training models on all but one drive test (which beomces test data)
-    dfs = [df241029, df241004, df241028]
+    dfs = [df241004, df241028, df241029]
     for i, dfTest in enumerate(dfs):
         dfTrain = pd.concat(
             [df for j, df in enumerate(dfs) if j != i], ignore_index=True, join="outer"
@@ -105,10 +107,21 @@ def main():
             Model(net, "NN", paramGridNet),
         ]
         for model in models:
-            print(f"Model: {model.getName()}")
             model.fit(xTrain, yTrain)
-            print(f"Training R2: {model.getR2(xTrain, yTrain):.4f}")
-            print(f"Training R2: {model.getR2(xTest, yTest):.4f}\n")
+            trainR2 = model.getR2(xTrain, yTrain)
+            testR2 = model.getR2(xTest, yTest)
+            data.append([model.getName(), i, trainR2, testR2])
+
+    df = pd.DataFrame(data, columns=cols)
+    saveExperimentData(
+        df,
+        "experiments/generalization/",
+        "drive_test_generalization",
+        selectedFloatCols,
+        selectedCatCols,
+        models,
+        "Drive tests are in order 2024-10-04, 2024-10-28, 2024-10-29",
+    )
 
 
 main()

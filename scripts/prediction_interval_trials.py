@@ -19,7 +19,6 @@ from data.data_processing import (
     processData,
     getDataProcessor,
     trainValTestSplit,
-    transformTimestamp,
 )
 from data.data_saver import saveExperimentData
 from models.model import Model
@@ -76,19 +75,21 @@ def runTrialsAndSaveData(
     dependentCol = "UL_bitrate"
     # Mbps from Kbps
     df[dependentCol] = df[dependentCol] / 1024
-    df = transformTimestamp(
-        df, "Timestamp", timeOfDayCol="Time_of_day", timeOfYearCol="Time_of_year"
-    )
 
     selectedFloatCols = [
         "Longitude",
-        "Latitude",
-        "Speed",
         "SNR",
-        "Time_of_day",
-        "Time_of_year",
+        "CQI",
+        "Level",
+        "Qual",
     ]
-    selectedCatCols = ["CellID"]
+    selectedCatCols = [
+        "CellID",
+        "NetworkMode",
+        "BAND",
+        "BANDWIDTH",
+        "PSC",
+    ]
 
     processor = getDataProcessor(selectedFloatCols, selectedCatCols, applyScaler=True)
     dataX, dataY = processData(

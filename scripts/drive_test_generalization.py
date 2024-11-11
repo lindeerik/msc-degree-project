@@ -29,8 +29,6 @@ def main():
     dependentCol = "UL_bitrate"
     selectedFloatCols = [
         "Longitude",
-        "Latitude",
-        "Speed",
         "SNR",
         "CQI",
         "Level",
@@ -41,6 +39,7 @@ def main():
         "NetworkMode",
         "BAND",
         "BANDWIDTH",
+        "PSC",
     ]
     data = []
     cols = ["Model", "Index of Drive Test for Testing Data", "Train R2", "Test R2"]

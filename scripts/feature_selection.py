@@ -1,22 +1,17 @@
 """
-Script for investigating feature selection
+Script for conducting feature selection with LASSO
 """
 
 import pandas as pd
 
-from sklearn.ensemble import RandomForestRegressor
-
 from data.data_loader import loadDataCsv
-from data.data_processing import transformTimestamp
 from data.data_saver import saveExperimentData
-from models.model import Model
-from features.feature_selection import BackwardFeatureSelector, ForwardFeatureSelector
+from features.lasso import lassoFeatureSelection
 
 
 def main():
     dirCsv = "data/intermediate/sthlm-sodertalje/"
     df = loadDataCsv(dirCsv, "")
-    df = transformTimestamp(df, "Timestamp", timeOfDayCol="Time_of_day")
 
     dependentCol = "UL_bitrate"
     selectedFloatCols = [
@@ -25,54 +20,31 @@ def main():
         "Speed",
         "SNR",
         "CQI",
-        "Time_of_day",
+        "Level",
+        "Qual",
     ]
     selectedCatCols = [
         "CellID",
+        "Node",
         "NetworkMode",
-        "Operatorname",
-        "CELLHEX",
-        "NODEHEX",
-        "LACHEX",
-        "RAWCELLID",
         "State",
+        "BAND",
+        "BANDWIDTH",
+        "LAC",
+        "PSC",
+        "CA",
     ]
-    rf = RandomForestRegressor(
-        n_estimators=300,
-        max_depth=20,
-        min_samples_split=5,
-        min_samples_leaf=2,
-        max_features="sqrt",
-    )
-    model = Model(rf, "Random Forest")
-
-    backwardSelector = BackwardFeatureSelector(model)
-    bestFloatCols, bestCatCols = backwardSelector.getBestFeatures(
+    selectedVariables, lasso = lassoFeatureSelection(
         df, selectedFloatCols, selectedCatCols, dependentCol
     )
-    backwardDf = pd.DataFrame({"Best Columns": bestFloatCols + bestCatCols})
+    data = pd.DataFrame({"Selected Variables": selectedVariables})
     saveExperimentData(
-        backwardDf,
+        data,
         "experiments/feature-selection/",
-        "backward:feature_selection",
+        "lasso",
         selectedFloatCols,
         selectedCatCols,
-        [model],
-        "",
-    )
-
-    forwardSelector = ForwardFeatureSelector(model)
-    bestFloatCols, bestCatCols = forwardSelector.getBestFeatures(
-        df, selectedFloatCols, selectedCatCols, dependentCol
-    )
-    forwardDf = pd.DataFrame({"Best Columns": bestFloatCols + bestCatCols})
-    saveExperimentData(
-        forwardDf,
-        "experiments/feature-selection/",
-        "forward_feature_selection",
-        selectedFloatCols,
-        selectedCatCols,
-        [model],
+        [lasso],
         "",
     )
 

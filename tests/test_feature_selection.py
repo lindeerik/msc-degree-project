@@ -9,7 +9,7 @@ import pytest
 
 from models.model import Model
 
-from features.feature_selection import BackwardFeatureSelector, ForwardFeatureSelector
+from features.sequential_feature_selection import BackwardFeatureSelector, ForwardFeatureSelector
 
 
 @pytest.fixture

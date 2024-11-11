@@ -1,0 +1,32 @@
+{
+    "experiment_name": "lasso_20241111T142918Z",
+    "float_columns": [
+        "Longitude",
+        "Latitude",
+        "Speed",
+        "SNR",
+        "CQI",
+        "Level",
+        "Qual"
+    ],
+    "categorical_columns": [
+        "CellID",
+        "Node",
+        "NetworkMode",
+        "State",
+        "BAND",
+        "BANDWIDTH",
+        "LAC",
+        "PSC",
+        "CA"
+    ],
+    "models": {
+        "Lasso": {
+            "name": "Lasso",
+            "type": "<class 'sklearn.linear_model._coordinate_descent.LassoCV'>",
+            "parameter_grid": null,
+            "parameters": "{'alphas': None, 'copy_X': True, 'cv': 5, 'eps': 0.001, 'fit_intercept': True, 'max_iter': 10000, 'n_alphas': 10000, 'n_jobs': None, 'positive': False, 'precompute': 'auto', 'random_state': None, 'selection': 'cyclic', 'tol': 0.0001, 'verbose': False}"
+        }
+    },
+    "notes": ""
+}

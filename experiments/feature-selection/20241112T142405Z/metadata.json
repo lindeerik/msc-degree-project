@@ -1,11 +1,10 @@
 {
-    "experiment_name": "lasso_20241111T142918Z",
+    "experiment_name": "lasso_20241112T142405Z",
     "float_columns": [
         "Longitude",
         "Latitude",
         "Speed",
         "SNR",
-        "CQI",
         "Level",
         "Qual"
     ],
@@ -13,7 +12,6 @@
         "CellID",
         "Node",
         "NetworkMode",
-        "State",
         "BAND",
         "BANDWIDTH",
         "LAC",

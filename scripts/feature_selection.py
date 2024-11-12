@@ -19,7 +19,6 @@ def main():
         "Latitude",
         "Speed",
         "SNR",
-        "CQI",
         "Level",
         "Qual",
     ]

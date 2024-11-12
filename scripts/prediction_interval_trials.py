@@ -78,16 +78,19 @@ def runTrialsAndSaveData(
 
     selectedFloatCols = [
         "Longitude",
+        "Latitude",
+        "Speed",
         "SNR",
-        "CQI",
         "Level",
         "Qual",
     ]
     selectedCatCols = [
         "CellID",
+        "Node",
         "NetworkMode",
         "BAND",
         "BANDWIDTH",
+        "LAC",
         "PSC",
     ]
 

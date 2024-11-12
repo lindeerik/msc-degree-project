@@ -10,7 +10,7 @@ from features.lasso import lassoFeatureSelection
 
 
 def main():
-    dirCsv = "data/intermediate/sthlm-sodertalje/"
+    dirCsv = "data/intermediate/sthlm-sodertalje/train/"
     df = loadDataCsv(dirCsv, "")
 
     dependentCol = "UL_bitrate"
@@ -27,7 +27,6 @@ def main():
         "CellID",
         "Node",
         "NetworkMode",
-        "State",
         "BAND",
         "BANDWIDTH",
         "LAC",

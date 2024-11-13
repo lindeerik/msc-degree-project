@@ -33,7 +33,8 @@ def main():
     samplesCol = "Number of Samples"
     samplesEvalCol = "Evaluation Samples"
     r2Col = "Coefficient of Determination (R2)"
-    mseCol = "Mean Squared Error"
+    rmseCol = "Root Mean Squared Error"
+    maeCol = "Mean Absolute Error"
 
     cols = [
         modelCol,
@@ -41,7 +42,8 @@ def main():
         samplesCol,
         samplesEvalCol,
         r2Col,
-        mseCol,
+        rmseCol,
+        maeCol,
     ]
     trainRatios = [0.7, 0.8, 0.9]
     numTrials = 20
@@ -145,8 +147,9 @@ def runTrialsAndSaveData(cols, trainRatios, numTrials, saveDir, verbose=True):
 
 def addMetricsToList(data, model, name, trainRatio, samples, testSamples, xTest, yTest):
     r2 = model.getR2(xTest, yTest)
-    mse = model.getMse(xTest, yTest)
-    data.append([name, trainRatio, samples, testSamples, r2, mse])
+    rmse = model.getRmse(xTest, yTest)
+    mae = model.getMae(xTest, yTest)
+    data.append([name, trainRatio, samples, testSamples, r2, rmse, mae])
 
 
 main()

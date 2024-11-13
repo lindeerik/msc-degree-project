@@ -1,0 +1,31 @@
+Model,Parameter,Value
+NN_lower,batch_size,128
+NN_lower,lr,0.005
+NN_lower,max_epochs,300
+NN_lower,module__dropout_rate,0.2
+NN_lower,optimizer__betas,"(0.95, 0.999)"
+NN_lower,optimizer__weight_decay,0
+NN_upper,batch_size,64
+NN_upper,lr,0.005
+NN_upper,max_epochs,300
+NN_upper,module__dropout_rate,0.2
+NN_upper,optimizer__betas,"(0.9, 0.999)"
+NN_upper,optimizer__weight_decay,0
+QRF,max_depth,30.0
+QRF,max_features,0.3
+QRF,min_samples_leaf,1.0
+QRF,min_samples_split,5.0
+QRF,n_estimators,300.0
+RF_error,max_depth,20.0
+RF_error,max_features,0.3
+RF_error,min_samples_leaf,1.0
+RF_error,min_samples_split,2.0
+RF_error,n_estimators,200.0
+XGB_error,colsample_bytree,0.6
+XGB_error,gamma,0.3
+XGB_error,learning_rate,0.01
+XGB_error,max_depth,20.0
+XGB_error,n_estimators,200.0
+XGB_error,reg_alpha,0.1
+XGB_error,reg_lambda,0.1
+XGB_error,subsample,0.6

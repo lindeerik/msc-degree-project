@@ -1,0 +1,23 @@
+{
+    "batch_size": [
+        64
+    ],
+    "lr": [
+        0.05
+    ],
+    "max_epochs": [
+        300
+    ],
+    "module__dropout_rate": [
+        0.3
+    ],
+    "optimizer__betas": [
+        [
+            0.9,
+            0.999
+        ]
+    ],
+    "optimizer__weight_decay": [
+        0.001
+    ]
+}

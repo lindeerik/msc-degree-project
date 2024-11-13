@@ -11,10 +11,13 @@ from sklearn.ensemble import RandomForestRegressor
 from torch import optim
 from skorch import NeuralNetRegressor
 
+# xg-boost
+import xgboost as xgb
+
 # Random Forest Quantile
 from sklearn_quantile import RandomForestQuantileRegressor
 
-from data.data_loader import loadDataCsv
+from data.data_loader import loadDataCsv, loadHyperparams
 from data.data_processing import (
     processData,
     getDataProcessor,
@@ -68,8 +71,9 @@ def main():
 def runTrialsAndSaveData(
     cols, testRatio, trainRatios, alphas, numTrials, saveDir, verbose=True
 ):
-    dirCsv = "data/intermediate/sthlm-sodertalje/"
-    df = loadDataCsv(dirCsv, "")
+    dataDir = "data/intermediate/sthlm-sodertalje/train/"
+    hyperparamsDir = "config/hyperparameters/"
+    df = loadDataCsv(dataDir, "")
 
     ### DATA PREPARATION ###
     dependentCol = "UL_bitrate"
@@ -118,26 +122,16 @@ def runTrialsAndSaveData(
             verbose=0,
             train_split=None,
         )
-        paramGridNetLower = {
-            "lr": [0.01],
-            "max_epochs": [100],
-            "optimizer__weight_decay": [0.01],
-            "batch_size": [128],
-        }
-        paramGridNetUpper = {
-            "lr": [0.01],
-            "max_epochs": [100],
-            "optimizer__weight_decay": [0.01],
-            "batch_size": [128],
-        }
+        paramGridNetLower = loadHyperparams(hyperparamsDir + "nn_lower.json")
+        paramGridNetUpper = loadHyperparams(hyperparamsDir + "nn_upper.json")
 
         lowerScorer = pinballLossScorer(alpha / 2)
         upperScorer = pinballLossScorer(1 - alpha / 2)
         lowerModel = Model(
-            lowerNet, "Lower Bound Neural Network", paramGridNetLower, lowerScorer
+            lowerNet, "NN_lower", paramGridNetLower, lowerScorer
         )
         upperModel = Model(
-            upperNet, "Upper Bound Neural Network", paramGridNetUpper, upperScorer
+            upperNet, "NN_upper", paramGridNetUpper, upperScorer
         )
 
         quantileNeuralNetRegressor = QuantileRegressorNeuralNet(
@@ -150,15 +144,7 @@ def runTrialsAndSaveData(
         ### RANDOM FOREST QUANTILE REGRESSOR ###
 
         rfq = RandomForestQuantileRegressor(q=[alpha / 2, 1 - alpha / 2])
-        paramGridRfq = {
-            "n_estimators": [100],
-            "criterion": ["squared_error"],
-            "max_depth": [10],
-            "min_samples_split": [10],
-            "min_samples_leaf": [10],
-            "min_weight_fraction_leaf": [0.1],
-            "max_features": ["log2"],
-        }
+        paramGridRfq = loadHyperparams(hyperparamsDir + "qrf.json")
         doublePinballScorer = doublePinballLossScorer(alpha / 2, 1 - alpha / 2)
         rqfModel = Model(rfq, "QRF", paramGridRfq, doublePinballScorer)
 
@@ -171,33 +157,35 @@ def runTrialsAndSaveData(
 
         ### RANDOM FOREST CONFORMALIZING SCALAR PREDICTOR ###
         rfBase = RandomForestRegressor()
-        paramGridRfBase = {
-            "n_estimators": [300],
-            "max_depth": [20],
-            "min_samples_split": [5],
-            "min_samples_leaf": [2],
-            "max_features": ["sqrt"],
-        }
+        paramGridRfBase = loadHyperparams(hyperparamsDir + "rf.json")
 
         rfError = RandomForestRegressor()
-        paramGridRfError = {
-            "n_estimators": [300],
-            "max_depth": [20],
-            "min_samples_split": [5],
-            "min_samples_leaf": [2],
-            "max_features": ["sqrt"],
-        }
-        baseModel = Model(rfBase, "RF", paramGridRfBase)
-        errorModel = Model(rfError, "RF Error", paramGridRfError)
+        paramGridRfError = loadHyperparams(hyperparamsDir + "rf_error.json")
+        rfBaseModel = Model(rfBase, "RF", paramGridRfBase)
+        rfErrorModel = Model(rfError, "RF_error", paramGridRfError)
 
-        conformalizingScalar = ConformalizingScalarPredictor(
-            baseModel, errorModel, alpha, name="CSRF"
+        rfConformalizingScalar = ConformalizingScalarPredictor(
+            rfBaseModel, rfErrorModel, alpha, name="CSRF"
+        )
+
+        xgbBase = xgb.XGBRegressor()
+        paramGridXgbBase = loadHyperparams(hyperparamsDir + "xgb.json")
+
+        xgbError = xgb.XGBRegressor()
+        paramGridXgbError = loadHyperparams(hyperparamsDir + "xgb_error.json")
+
+        xgbBaseModel = Model(xgbBase, "XGB", paramGridXgbBase)
+        xgbErrorModel = Model(xgbError, "XGB_error", paramGridXgbError)
+
+        xgbConformalizingScalar = ConformalizingScalarPredictor(
+            xgbBaseModel, xgbErrorModel, alpha, name="CSXGB"
         )
 
         conformalPredictors = [
             conformalQuantileForestRegressor,
             conformalQuantileNeuralNetRegressor,
-            conformalizingScalar,
+            rfConformalizingScalar,
+            xgbConformalizingScalar,
         ]
         for j, trainRatio in enumerate(trainRatios):
             trainRatioOfAllData = trainRatio * (1 - testRatio)

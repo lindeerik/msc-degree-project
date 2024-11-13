@@ -11,7 +11,7 @@ from skorch import NeuralNetRegressor
 # xg-boost
 import xgboost as xgb
 
-from data.data_loader import loadCsv
+from data.data_loader import loadCsv, loadHyperparams
 from data.data_processing import processData, getDataProcessor
 from data.data_saver import saveExperimentData
 from models.model import Model
@@ -19,11 +19,13 @@ from models.neuralnetwork.architecture import ThroughputPredictor
 
 
 def main():
-    dirStd = "data/intermediate/sthlm-sodertalje/"
+    dataDir = "data/intermediate/sthlm-sodertalje/"
+    hyperparamsDir = "config/hyperparameters/"
 
-    df241004 = loadCsv(dirStd + "2024.10.04_11.19.11.csv", ["", "-"])
-    df241028 = loadCsv(dirStd + "2024.10.28_17.20.20.csv", ["", "-"])
-    df241029 = loadCsv(dirStd + "2024.10.29_07.18.51.csv", ["", "-"])
+
+    df241004 = loadCsv(dataDir + "2024.10.04_11.19.11.csv", ["", "-"])
+    df241028 = loadCsv(dataDir + "2024.10.28_17.20.20.csv", ["", "-"])
+    df241029 = loadCsv(dataDir + "2024.10.29_07.18.51.csv", ["", "-"])
 
     ### DATA PREPARATION ###
     dependentCol = "UL_bitrate"
@@ -69,25 +71,10 @@ def main():
         )
 
         rf = RandomForestRegressor()
-        paramGridRf = {
-            "n_estimators": [300],
-            "max_depth": [20],
-            "min_samples_split": [5],
-            "min_samples_leaf": [5],
-            "max_features": ["sqrt"],
-        }
+        paramGridRf = loadHyperparams(hyperparamsDir + "rf.json")
 
         xGradBoost = xgb.XGBRegressor()
-        paramGridXgb = {
-            "n_estimators": [200],
-            "learning_rate": [0.05],
-            "max_depth": [20],
-            "subsample": [0.8],
-            "colsample_bytree": [0.8],
-            "gamma": [0.1],
-            "reg_alpha": [0.01],
-            "reg_lambda": [1.5],
-        }
+        paramGridXgb = loadHyperparams(hyperparamsDir + "xgb.json")
 
         net = NeuralNetRegressor(
             ThroughputPredictor,
@@ -97,12 +84,8 @@ def main():
             verbose=0,
             train_split=None,
         )
-        paramGridNet = {
-            "lr": [0.01],
-            "max_epochs": [100],
-            "optimizer__weight_decay": [0.001],
-            "batch_size": [16],
-        }
+        paramGridNet = loadHyperparams(hyperparamsDir + "nn.json")
+
         models = [
             Model(rf, "RF", paramGridRf),
             Model(xGradBoost, "XGB", paramGridXgb),

@@ -15,7 +15,7 @@ from skorch import NeuralNetRegressor
 # xg-boost
 import xgboost as xgb
 
-from data.data_loader import loadDataCsv
+from data.data_loader import loadDataCsv, loadHyperparams
 from data.data_processing import (
     processData,
     getDataProcessor,
@@ -49,8 +49,9 @@ def main():
 
 # pylint: disable-msg=too-many-locals, too-many-statements
 def runTrialsAndSaveData(cols, trainRatios, numTrials, saveDir, verbose=True):
-    dirCsv = "data/intermediate/sthlm-sodertalje/"
-    df = loadDataCsv(dirCsv, "")
+    dataDir = "data/intermediate/sthlm-sodertalje/"
+    hyperparamsDir = "config/hyperparameters/"
+    df = loadDataCsv(dataDir, "")
 
     ### DATA PREPARATION ###
     dependentCol = "UL_bitrate"
@@ -83,27 +84,10 @@ def runTrialsAndSaveData(cols, trainRatios, numTrials, saveDir, verbose=True):
     data = []
     ### SELECT MODELS ###
     rf = RandomForestRegressor()
-
-    paramGridRf = {
-        "n_estimators": [300],
-        "max_depth": [20],
-        "min_samples_split": [5],
-        "min_samples_leaf": [1, 2, 4],
-        "max_features": ["sqrt"],
-    }
+    paramGridRf = loadHyperparams(hyperparamsDir + "rf.json")
 
     xGradBoost = xgb.XGBRegressor()
-
-    paramGridXgb = {
-        "n_estimators": [200],
-        "learning_rate": [0.05],
-        "max_depth": [5],
-        "subsample": [0.8],
-        "colsample_bytree": [0.8],
-        "gamma": [0.1],
-        "reg_alpha": [0.01],
-        "reg_lambda": [1.5],
-    }
+    paramGridXgb = loadHyperparams(hyperparamsDir + "xgb.json")
 
     net = NeuralNetRegressor(
         ThroughputPredictor,
@@ -113,13 +97,7 @@ def runTrialsAndSaveData(cols, trainRatios, numTrials, saveDir, verbose=True):
         verbose=0,
         train_split=None,
     )
-
-    paramGridNet = {
-        "lr": [0.01],
-        "max_epochs": [100],
-        "optimizer__weight_decay": [0.01],
-        "batch_size": [128],
-    }
+    paramGridNet = loadHyperparams(hyperparamsDir + "nn.json")
 
     models = [
         Model(rf, "RF", paramGridRf),

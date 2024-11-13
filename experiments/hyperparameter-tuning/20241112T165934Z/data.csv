@@ -1,0 +1,20 @@
+Model,Parameter,Value
+RF,max_depth,
+RF,max_features,0.3
+RF,min_samples_leaf,1
+RF,min_samples_split,2
+RF,n_estimators,200
+XGB,colsample_bytree,0.6
+XGB,gamma,0
+XGB,learning_rate,0.01
+XGB,max_depth,20
+XGB,n_estimators,500
+XGB,reg_alpha,0.1
+XGB,reg_lambda,0.1
+XGB,subsample,0.6
+NN,batch_size,64
+NN,lr,0.005
+NN,max_epochs,300
+NN,module__dropout_rate,0.2
+NN,optimizer__betas,"(0.9, 0.999)"
+NN,optimizer__weight_decay,0.001

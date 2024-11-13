@@ -54,8 +54,20 @@ def saveModelsToPkl(models, dirName):
     subDirName = os.path.join(dirName, "models")
     os.makedirs(subDirName, exist_ok=True)
     for model in models:
-        path = os.path.join(subDirName, f"{model.getName()}.pkl".lower().replace(" ", "_"))
+        path = os.path.join(
+            subDirName, f"{model.getName()}.pkl".lower().replace(" ", "_")
+        )
         model.saveModel(path)
+
+
+def saveModelBestParamsToJson(model, dirName):
+    bestParams = model.getBestParams()
+    if bestParams:
+        fileName = model.getName().lower().replace(" ", "_")
+        file = os.path.join(dirName, f"{fileName}.json")
+        bestParams = {key: [value] for key, value in bestParams.items()}
+        with open(file, "w", encoding="utf-8") as jsonFile:
+            json.dump(bestParams, jsonFile, indent=4)
 
 
 def saveCsvWithDateTime(data, path):

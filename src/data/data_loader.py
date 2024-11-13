@@ -4,6 +4,7 @@ Data loading for tabular data
 
 import glob
 import os
+import json
 import pickle
 
 import pandas as pd
@@ -39,3 +40,15 @@ def loadDataParquet(filePath):
 def loadModel(modelPath):
     with open(modelPath, "rb") as f:
         return pickle.load(f)
+
+
+def loadHyperparams(filePath):
+    try:
+        with open(filePath, "r", encoding="utf-8") as f:
+            hyperparams = json.load(f)
+        return hyperparams
+    except FileNotFoundError:
+        print(
+            f"Warning: Hyperparameter file not found at '{filePath}'. Using default values."
+        )
+        return {}

@@ -48,12 +48,20 @@ def test_predict(sampleData, fittedModel):
     ), "The number of predictions should match the number of samples."
 
 
-def test_getMse(sampleData, fittedModel):
+def test_getRmse(sampleData, fittedModel):
     X, Y = sampleData
     model = fittedModel
-    mse = model.getMse(X, Y)
+    rmse = model.getRmse(X, Y)
 
-    assert mse >= 0, "Mean Squared Error should be non-negative."
+    assert rmse >= 0, "Mean Squared Error should be non-negative."
+
+
+def test_getMae(sampleData, fittedModel):
+    X, Y = sampleData
+    model = fittedModel
+    mae = model.getMae(X, Y)
+
+    assert mae >= 0, "Mean Squared Error should be non-negative."
 
 
 def test_getR2(sampleData, fittedModel):

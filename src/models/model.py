@@ -5,7 +5,7 @@ Model wrapper for scikit-learn, xgboost, and skorch
 import pickle
 
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import r2_score, root_mean_squared_error, mean_absolute_error
 
 
 class Model:
@@ -49,9 +49,13 @@ class Model:
             self.__model = grid_search.best_estimator_
             self.__bestParams = grid_search.best_params_
 
-    def getMse(self, X, Y):
+    def getRmse(self, X, Y):
         yPred = self.predict(X)
-        return mean_squared_error(Y.values, yPred)
+        return root_mean_squared_error(Y.values, yPred)
+
+    def getMae(self, X, Y):
+        yPred = self.predict(X)
+        return mean_absolute_error(Y.values, yPred)
 
     def getR2(self, X, Y):
         yPred = self.predict(X)

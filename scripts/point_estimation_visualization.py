@@ -15,7 +15,7 @@ def main():
     trainRatioCol = "Train ratio"
     samplesCol = "Number of Samples"
     r2Col = "Coefficient of Determination (R2)"
-    mseCol = "Mean Squared Error"
+    rmseCol = "Mean Squared Error"
     df = pd.read_csv(saveDir + "20241025T092710Z.csv")
 
     visualizeTrials(
@@ -24,7 +24,7 @@ def main():
         trainRatioCol,
         samplesCol,
         r2Col,
-        mseCol,
+        rmseCol,
         show=False,
         savePath="figures/",
     )
@@ -36,12 +36,12 @@ def visualizeTrials(
     trainRatioCol,
     samplesCol,
     r2Col,
-    mseCol,
+    rmseCol,
     show=True,
     savePath=None,
 ):
     titleR2 = "Determination of Coefficient ($R^2$)"
-    titleMse = "Mean Squared Error"
+    titleRmse = "Root Mean Squared Error"
 
     # Fixed train ratio = 0.8
     dfFixedTrainRatio = df[df[trainRatioCol] == 0.8]
@@ -55,9 +55,9 @@ def visualizeTrials(
 
     plotBoxplotFromDf(
         dfFixedTrainRatio,
-        f"{titleMse}: 80% Train Ratio",
+        f"{titleRmse}: 80% Train Ratio",
         modelCol,
-        mseCol,
+        rmseCol,
     )
 
     plotLineChartFromDf(

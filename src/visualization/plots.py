@@ -41,8 +41,8 @@ def plotHistogram(
 def plotBoxplotFromDf(
     df, title, xLabel, yLabel, figSize=(8, 6), show=False, addHLine=False, valHLine=None
 ):
-    plt.figure(figsize=figSize)
     sns.set_theme(style="whitegrid", palette="pastel")
+    plt.figure(figsize=figSize)
     sns.boxplot(
         x=xLabel, y=yLabel, data=df, linewidth=1.5, order=sorted(df[xLabel].unique())
     )
@@ -59,6 +59,7 @@ def plotBoxplotFromDf(
         plt.show()
 
 
+# pylint: disable-msg=too-many-arguments
 def plotLineChartFromDf(
     df,
     xLabel,
@@ -69,19 +70,22 @@ def plotLineChartFromDf(
     show=False,
     addDiagonal=False,
     diagLabel=None,
+    palette=None,
+    dashes=True,
 ):
     df = df.groupby([xLabel, groupLabel]).mean().reset_index()
-    plt.subplots(figsize=figSize)
-
     sns.set_theme(style="whitegrid", palette="pastel")
+    plt.subplots(figsize=figSize)
 
     sns.lineplot(
         x=xLabel,
         y=yLabel,
         hue=groupLabel,
         data=df,
-        linewidth=1.5,
         style=groupLabel,
+        dashes=dashes,
+        palette=palette,
+        linewidth=1.5,
         markers=True,
         errorbar=None,
     )

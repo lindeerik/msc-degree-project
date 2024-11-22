@@ -3,21 +3,26 @@ from models.conformalprediction.quantile_regression import getConformalQuantileS
 
 
 class ConformalizingScalarPredictor:
-    def __init__(self, baseModel, errorModel, alpha, name=""):
+    def __init__(self, baseModel, errorModel, alpha, name="", minVal=None, maxVal=None):
         self._baseModel = baseModel
         self._errorModel = errorModel
         self._conformalScoreFunc = self.getConformalScoreFunc()
         self._alpha = alpha
         self._conformalQuantileScore = None
         self._name = name
+        self._minVal = minVal
+        self._maxVal = maxVal
 
     def predict(self, X):
         yPred = self._baseModel.predict(X)
         yPredError = self._errorModel.predict(X)
-        return [
-            yPred - self._conformalQuantileScore * yPredError,
-            yPred + self._conformalQuantileScore * yPredError,
-        ]
+        lowerBounds = yPred - self._conformalQuantileScore * yPredError
+        upperbounds = yPred + self._conformalQuantileScore * yPredError
+        if self._minVal is not None:
+            lowerBounds = np.maximum(self._minVal, lowerBounds)
+        if self._maxVal is not None:
+            upperbounds = np.minimum(self._maxVal, upperbounds)
+        return [lowerBounds, upperbounds]
 
     def fit(self, xTrain, yTrain, xVal, yVal, folds=5):
         self._baseModel.gridSearchFit(xTrain, yTrain, folds)

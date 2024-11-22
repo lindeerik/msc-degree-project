@@ -80,13 +80,17 @@ class QuantileRegressorRandomForest(QuantileRegressor):
 
 
 class ConformalizedQuantileRegressor:
-    def __init__(self, quantileRegressor, scaling=None, name=""):
+    def __init__(
+        self, quantileRegressor, scaling=None, name="", minVal=None, maxVal=None
+    ):
         self._quantileRegressor = quantileRegressor
         self._conformalScoreFunc = self.conformalScore
         self._alpha = quantileRegressor.getAlpha()
         self._conformalQuantileScore = None
         self._scalingFunc = self.getScalingFunc(scaling)
         self._name = name
+        self._minVal = minVal
+        self._maxVal = maxVal
 
     def fit(self, xTrain, yTrain, xVal, yVal, folds=5):
         self._quantileRegressor.fit(xTrain, yTrain, folds)
@@ -97,12 +101,15 @@ class ConformalizedQuantileRegressor:
         )
 
     def predict(self, X):
-        intervals = self._quantileRegressor.predict(X)
+        lowerBounds, upperbounds = self._quantileRegressor.predict(X)
         scaling = self._scalingFunc(X)
-        return [
-            intervals[0] - self._conformalQuantileScore * scaling,
-            intervals[1] + self._conformalQuantileScore * scaling,
-        ]
+        lowerBounds = lowerBounds - self._conformalQuantileScore * scaling
+        upperbounds = upperbounds + self._conformalQuantileScore * scaling
+        if self._minVal is not None:
+            lowerBounds = np.maximum(self._minVal, lowerBounds)
+        if self._maxVal is not None:
+            upperbounds = np.minimum(self._maxVal, upperbounds)
+        return [lowerBounds, upperbounds]
 
     def getQuantileRegressor(self):
         return self._quantileRegressor

@@ -2,63 +2,56 @@
 Generating results from running trials of point-estimation models
 """
 
+import numpy as np
 import pandas as pd
 
-# Sci-kit
-from sklearn.ensemble import RandomForestRegressor
-
-# Torch
-from torch import optim
-from torch import nn
-from skorch import NeuralNetRegressor
-
-# xg-boost
-import xgboost as xgb
-
-from data.data_loader import loadDataCsv, loadHyperparams
-from data.data_processing import (
-    processData,
-    getDataProcessor,
-    trainTestSplit,
-)
+from data.data_loader import loadDataCsv
+from data.data_processing import processData, getDataProcessor
 from data.data_saver import saveExperimentData
-from models.model import Model
-from models.neuralnetwork.architecture import ThroughputPredictor
+from models.tuned_models import getPointEstimationModels
 
 
 def main():
-    saveDir = "experiments/point-estimation/"
+    saveDir = "experiments/point-estimation/samples/"
     modelCol = "Model"
     trainRatioCol = "Train ratio"
     samplesCol = "Number of Samples"
-    samplesEvalCol = "Evaluation Samples"
-    r2Col = "Coefficient of Determination (R2)"
-    rmseCol = "Root Mean Squared Error"
-    maeCol = "Mean Absolute Error"
+    trainR2Col = "Training R2"
+    testR2Col = "Test R2"
+    trainRmseCol = "Training RMSE"
+    testRmseCol = "Test RMSE"
+    trainMaeCol = "Training MAE"
+    testMaeCol = "Test MAE"
 
     cols = [
         modelCol,
         trainRatioCol,
         samplesCol,
-        samplesEvalCol,
-        r2Col,
-        rmseCol,
-        maeCol,
+        trainR2Col,
+        testR2Col,
+        trainRmseCol,
+        testRmseCol,
+        trainMaeCol,
+        testMaeCol,
     ]
-    trainRatios = [0.7, 0.8, 0.9]
-    numTrials = 20
+    trainRatios = np.divide([1000, 2000, 5000, 8000, 12000, 15000, 17368], 17368)
+    numTrials = 1
     runTrialsAndSaveData(cols, trainRatios, numTrials, saveDir)
+
 
 # pylint: disable-msg=too-many-locals, too-many-statements
 def runTrialsAndSaveData(cols, trainRatios, numTrials, saveDir, verbose=True):
-    dataDir = "data/intermediate/sthlm-sodertalje/"
+    trainData = "data/intermediate/sthlm-sodertalje/train/"
+    testData = "data/intermediate/sthlm-sodertalje/test/"
     hyperparamsDir = "config/hyperparameters/"
-    df = loadDataCsv(dataDir, "")
+    dfTrain = loadDataCsv(trainData, ["", "-"])
+    dfTest = loadDataCsv(testData, ["", "-"])
 
     ### DATA PREPARATION ###
     dependentCol = "UL_bitrate"
     # Mbps from Kbps
-    df[dependentCol] = df[dependentCol] / 1024
+    dfTrain[dependentCol] = dfTrain[dependentCol] / 1024
+    dfTest[dependentCol] = dfTest[dependentCol] / 1024
 
     selectedFloatCols = [
         "Longitude",
@@ -79,56 +72,54 @@ def runTrialsAndSaveData(cols, trainRatios, numTrials, saveDir, verbose=True):
     ]
 
     processor = getDataProcessor(selectedFloatCols, selectedCatCols, applyScaler=True)
-    dataX, dataY = processData(
-        df, selectedFloatCols, selectedCatCols, dependentCol, processor
+    xTrainFull, yTrainFull = processData(
+        dfTrain, selectedFloatCols, selectedCatCols, dependentCol, processor
+    )
+    xTest, yTest = processData(
+        dfTest,
+        selectedFloatCols,
+        selectedCatCols,
+        dependentCol,
+        processor,
+        fitProcessor=False,
     )
 
     data = []
-    ### SELECT MODELS ###
-    rf = RandomForestRegressor()
-    paramGridRf = loadHyperparams(hyperparamsDir + "rf.json")
-
-    xGradBoost = xgb.XGBRegressor()
-    paramGridXgb = loadHyperparams(hyperparamsDir + "xgb.json")
-
-    net = NeuralNetRegressor(
-        ThroughputPredictor,
-        module__input_size=dataX.shape[1],
-        optimizer=optim.Adam,
-        criterion=nn.MSELoss,
-        verbose=0,
-        train_split=None,
-    )
-    paramGridNet = loadHyperparams(hyperparamsDir + "nn.json")
-
-    models = [
-        Model(rf, "RF", paramGridRf),
-        Model(xGradBoost, "XGB", paramGridXgb),
-        Model(net, "NN", paramGridNet),
-    ]
-
     ### TRIALS ###
     for j, trainRatio in enumerate(trainRatios):
+        samples = int(trainRatio * xTrainFull.shape[0])
         for _ in range(numTrials):
-            xTrain, xTest, yTrain, yTest = trainTestSplit(dataX, dataY, trainRatio)
-            samples = xTrain.shape[0]
-            testSamples = xTest.shape[0]
+            indices = np.random.permutation(xTrainFull.shape[0])
+            xTrain = xTrainFull[indices[:samples], :]
+            yTrain = yTrainFull.iloc[indices[:samples]]
+
+            models = getPointEstimationModels(hyperparamsDir, xTrain.shape[1])
 
             for model in models:
                 model.fit(xTrain, yTrain)
 
             for model in models:
                 name = model.getName()
-                addMetricsToList(
-                    data,
-                    model,
-                    name,
-                    trainRatio,
-                    samples,
-                    testSamples,
-                    xTest,
-                    yTest,
+                trainR2 = model.getR2(xTrain, yTrain)
+                testR2 = model.getR2(xTest, yTest)
+                trainRmse = model.getRmse(xTrain, yTrain)
+                testRmse = model.getRmse(xTest, yTest)
+                trainMae = model.getMae(xTrain, yTrain)
+                testMae = model.getMae(xTest, yTest)
+                data.append(
+                    [
+                        name,
+                        trainRatio,
+                        samples,
+                        trainR2,
+                        testR2,
+                        trainRmse,
+                        testRmse,
+                        trainMae,
+                        testMae,
+                    ]
                 )
+
         if verbose:
             completedShare = (j + 1) / len(trainRatios)
             print(f"Completed {completedShare*100:.2f}% of trials")
@@ -143,13 +134,6 @@ def runTrialsAndSaveData(cols, trainRatios, numTrials, saveDir, verbose=True):
         models,
         "",
     )
-
-
-def addMetricsToList(data, model, name, trainRatio, samples, testSamples, xTest, yTest):
-    r2 = model.getR2(xTest, yTest)
-    rmse = model.getRmse(xTest, yTest)
-    mae = model.getMae(xTest, yTest)
-    data.append([name, trainRatio, samples, testSamples, r2, rmse, mae])
 
 
 main()

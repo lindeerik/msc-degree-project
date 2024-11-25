@@ -1,0 +1,222 @@
+{
+    "experiment_name": "evaluate_generalization_drivetest_3_20241117T143810Z",
+    "float_columns": [
+        "Longitude",
+        "Latitude",
+        "Speed",
+        "SNR",
+        "Level",
+        "Qual"
+    ],
+    "categorical_columns": [
+        "CellID",
+        "Node",
+        "NetworkMode",
+        "BAND",
+        "BANDWIDTH",
+        "LAC",
+        "PSC"
+    ],
+    "models": {
+        "CQRF": {
+            "scaling": "<bound method ConformalizedQuantileRegressor.identityScaling of <models.conformalprediction.quantile_regression.ConformalizedQuantileRegressor object at 0x33fc3fb20>>",
+            "quantile_regressor": {
+                "name": "QRF",
+                "type": "<class 'sklearn_quantile.ensemble.quantile.RandomForestQuantileRegressor'>",
+                "parameter_grid": {
+                    "max_depth": [
+                        30
+                    ],
+                    "max_features": [
+                        0.3
+                    ],
+                    "min_samples_leaf": [
+                        1
+                    ],
+                    "min_samples_split": [
+                        5
+                    ],
+                    "n_estimators": [
+                        300
+                    ]
+                },
+                "parameters": "{'bootstrap': True, 'ccp_alpha': 0.0, 'criterion': 'squared_error', 'max_depth': 30, 'max_features': 0.3, 'max_leaf_nodes': None, 'max_samples': None, 'min_impurity_decrease': 0.0, 'min_samples_leaf': 1, 'min_samples_split': 5, 'min_weight_fraction_leaf': 0.0, 'monotonic_cst': None, 'n_estimators': 300, 'n_jobs': None, 'oob_score': False, 'q': [0.05, 0.95], 'random_state': None, 'verbose': 0, 'warm_start': False}"
+            }
+        },
+        "CQNN": {
+            "scaling": "<bound method ConformalizedQuantileRegressor.identityScaling of <models.conformalprediction.quantile_regression.ConformalizedQuantileRegressor object at 0x33fc3f820>>",
+            "quantile_regressor": {
+                "alpha": 0.1,
+                "lower_bound_model": {
+                    "name": "NN_lower",
+                    "type": "<class 'skorch.regressor.NeuralNetRegressor'>",
+                    "parameter_grid": {
+                        "batch_size": [
+                            128
+                        ],
+                        "lr": [
+                            0.005
+                        ],
+                        "max_epochs": [
+                            300
+                        ],
+                        "module__dropout_rate": [
+                            0.2
+                        ],
+                        "optimizer__betas": [
+                            [
+                                0.95,
+                                0.999
+                            ]
+                        ],
+                        "optimizer__weight_decay": [
+                            0
+                        ]
+                    },
+                    "parameters": "{'module': <class 'models.neuralnetwork.architecture.ThroughputPredictor'>, 'criterion': PinballLoss(), 'optimizer': <class 'torch.optim.adam.Adam'>, 'lr': 0.005, 'max_epochs': 300, 'batch_size': 128, 'iterator_train': <class 'torch.utils.data.dataloader.DataLoader'>, 'iterator_valid': <class 'torch.utils.data.dataloader.DataLoader'>, 'dataset': <class 'skorch.dataset.Dataset'>, 'train_split': None, 'callbacks': None, 'predict_nonlinearity': 'auto', 'warm_start': False, 'verbose': 0, 'device': 'cpu', 'compile': False, 'use_caching': 'auto', '_params_to_validate': {'module__input_size', 'optimizer__weight_decay', 'optimizer__betas', 'module__dropout_rate'}, 'module__input_size': 39, 'module__dropout_rate': 0.2, 'optimizer__betas': [0.95, 0.999], 'optimizer__weight_decay': 0, 'callbacks__epoch_timer': <skorch.callbacks.logging.EpochTimer object at 0x161c17250>, 'callbacks__train_loss': <skorch.callbacks.scoring.PassthroughScoring object at 0x33fbdafa0>, 'callbacks__train_loss__name': 'train_loss', 'callbacks__train_loss__lower_is_better': True, 'callbacks__train_loss__on_train': True, 'callbacks__valid_loss': <skorch.callbacks.scoring.PassthroughScoring object at 0x167affee0>, 'callbacks__valid_loss__name': 'valid_loss', 'callbacks__valid_loss__lower_is_better': True, 'callbacks__valid_loss__on_train': False, 'callbacks__print_log': <skorch.callbacks.logging.PrintLog object at 0x167affcd0>, 'callbacks__print_log__keys_ignored': None, 'callbacks__print_log__sink': <built-in function print>, 'callbacks__print_log__tablefmt': 'simple', 'callbacks__print_log__floatfmt': '.4f', 'callbacks__print_log__stralign': 'right'}"
+                },
+                "upper_bound_model": {
+                    "name": "NN_upper",
+                    "type": "<class 'skorch.regressor.NeuralNetRegressor'>",
+                    "parameter_grid": {
+                        "batch_size": [
+                            64
+                        ],
+                        "lr": [
+                            0.005
+                        ],
+                        "max_epochs": [
+                            300
+                        ],
+                        "module__dropout_rate": [
+                            0.2
+                        ],
+                        "optimizer__betas": [
+                            [
+                                0.95,
+                                0.999
+                            ]
+                        ],
+                        "optimizer__weight_decay": [
+                            0
+                        ]
+                    },
+                    "parameters": "{'module': <class 'models.neuralnetwork.architecture.ThroughputPredictor'>, 'criterion': PinballLoss(), 'optimizer': <class 'torch.optim.adam.Adam'>, 'lr': 0.005, 'max_epochs': 300, 'batch_size': 64, 'iterator_train': <class 'torch.utils.data.dataloader.DataLoader'>, 'iterator_valid': <class 'torch.utils.data.dataloader.DataLoader'>, 'dataset': <class 'skorch.dataset.Dataset'>, 'train_split': None, 'callbacks': None, 'predict_nonlinearity': 'auto', 'warm_start': False, 'verbose': 0, 'device': 'cpu', 'compile': False, 'use_caching': 'auto', '_params_to_validate': {'module__input_size', 'optimizer__weight_decay', 'optimizer__betas', 'module__dropout_rate'}, 'module__input_size': 39, 'module__dropout_rate': 0.2, 'optimizer__betas': [0.95, 0.999], 'optimizer__weight_decay': 0, 'callbacks__epoch_timer': <skorch.callbacks.logging.EpochTimer object at 0x33fbda3d0>, 'callbacks__train_loss': <skorch.callbacks.scoring.PassthroughScoring object at 0x161c17250>, 'callbacks__train_loss__name': 'train_loss', 'callbacks__train_loss__lower_is_better': True, 'callbacks__train_loss__on_train': True, 'callbacks__valid_loss': <skorch.callbacks.scoring.PassthroughScoring object at 0x167affcd0>, 'callbacks__valid_loss__name': 'valid_loss', 'callbacks__valid_loss__lower_is_better': True, 'callbacks__valid_loss__on_train': False, 'callbacks__print_log': <skorch.callbacks.logging.PrintLog object at 0x167affbe0>, 'callbacks__print_log__keys_ignored': None, 'callbacks__print_log__sink': <built-in function print>, 'callbacks__print_log__tablefmt': 'simple', 'callbacks__print_log__floatfmt': '.4f', 'callbacks__print_log__stralign': 'right'}"
+                }
+            }
+        },
+        "CSRF": {
+            "alpha": 0.1,
+            "base_model": {
+                "name": "RF",
+                "type": "<class 'sklearn.ensemble._forest.RandomForestRegressor'>",
+                "parameter_grid": {
+                    "max_depth": [
+                        null
+                    ],
+                    "max_features": [
+                        0.3
+                    ],
+                    "min_samples_leaf": [
+                        1
+                    ],
+                    "min_samples_split": [
+                        2
+                    ],
+                    "n_estimators": [
+                        200
+                    ]
+                },
+                "parameters": "{'bootstrap': True, 'ccp_alpha': 0.0, 'criterion': 'squared_error', 'max_depth': None, 'max_features': 0.3, 'max_leaf_nodes': None, 'max_samples': None, 'min_impurity_decrease': 0.0, 'min_samples_leaf': 1, 'min_samples_split': 2, 'min_weight_fraction_leaf': 0.0, 'monotonic_cst': None, 'n_estimators': 200, 'n_jobs': None, 'oob_score': False, 'random_state': None, 'verbose': 0, 'warm_start': False}"
+            },
+            "error_model": {
+                "name": "RF_error",
+                "type": "<class 'sklearn.ensemble._forest.RandomForestRegressor'>",
+                "parameter_grid": {
+                    "max_depth": [
+                        20
+                    ],
+                    "max_features": [
+                        0.3
+                    ],
+                    "min_samples_leaf": [
+                        1
+                    ],
+                    "min_samples_split": [
+                        2
+                    ],
+                    "n_estimators": [
+                        200
+                    ]
+                },
+                "parameters": "{'bootstrap': True, 'ccp_alpha': 0.0, 'criterion': 'squared_error', 'max_depth': 20, 'max_features': 0.3, 'max_leaf_nodes': None, 'max_samples': None, 'min_impurity_decrease': 0.0, 'min_samples_leaf': 1, 'min_samples_split': 2, 'min_weight_fraction_leaf': 0.0, 'monotonic_cst': None, 'n_estimators': 200, 'n_jobs': None, 'oob_score': False, 'random_state': None, 'verbose': 0, 'warm_start': False}"
+            }
+        },
+        "CSXGB": {
+            "alpha": 0.1,
+            "base_model": {
+                "name": "XGB",
+                "type": "<class 'xgboost.sklearn.XGBRegressor'>",
+                "parameter_grid": {
+                    "colsample_bytree": [
+                        0.6
+                    ],
+                    "gamma": [
+                        0.0
+                    ],
+                    "learning_rate": [
+                        0.01
+                    ],
+                    "max_depth": [
+                        20
+                    ],
+                    "n_estimators": [
+                        500
+                    ],
+                    "reg_alpha": [
+                        0.1
+                    ],
+                    "reg_lambda": [
+                        0.1
+                    ],
+                    "subsample": [
+                        0.6
+                    ]
+                },
+                "parameters": "{'objective': 'reg:squarederror', 'base_score': None, 'booster': None, 'callbacks': None, 'colsample_bylevel': None, 'colsample_bynode': None, 'colsample_bytree': 0.6, 'device': None, 'early_stopping_rounds': None, 'enable_categorical': False, 'eval_metric': None, 'feature_types': None, 'gamma': 0.0, 'grow_policy': None, 'importance_type': None, 'interaction_constraints': None, 'learning_rate': 0.01, 'max_bin': None, 'max_cat_threshold': None, 'max_cat_to_onehot': None, 'max_delta_step': None, 'max_depth': 20, 'max_leaves': None, 'min_child_weight': None, 'missing': nan, 'monotone_constraints': None, 'multi_strategy': None, 'n_estimators': 500, 'n_jobs': None, 'num_parallel_tree': None, 'random_state': None, 'reg_alpha': 0.1, 'reg_lambda': 0.1, 'sampling_method': None, 'scale_pos_weight': None, 'subsample': 0.6, 'tree_method': None, 'validate_parameters': None, 'verbosity': None}"
+            },
+            "error_model": {
+                "name": "XGB_error",
+                "type": "<class 'xgboost.sklearn.XGBRegressor'>",
+                "parameter_grid": {
+                    "colsample_bytree": [
+                        0.6
+                    ],
+                    "gamma": [
+                        0.3
+                    ],
+                    "learning_rate": [
+                        0.01
+                    ],
+                    "max_depth": [
+                        20
+                    ],
+                    "n_estimators": [
+                        200
+                    ],
+                    "reg_alpha": [
+                        0.1
+                    ],
+                    "reg_lambda": [
+                        0.1
+                    ],
+                    "subsample": [
+                        0.6
+                    ]
+                },
+                "parameters": "{'objective': 'reg:squarederror', 'base_score': None, 'booster': None, 'callbacks': None, 'colsample_bylevel': None, 'colsample_bynode': None, 'colsample_bytree': 0.6, 'device': None, 'early_stopping_rounds': None, 'enable_categorical': False, 'eval_metric': None, 'feature_types': None, 'gamma': 0.3, 'grow_policy': None, 'importance_type': None, 'interaction_constraints': None, 'learning_rate': 0.01, 'max_bin': None, 'max_cat_threshold': None, 'max_cat_to_onehot': None, 'max_delta_step': None, 'max_depth': 20, 'max_leaves': None, 'min_child_weight': None, 'missing': nan, 'monotone_constraints': None, 'multi_strategy': None, 'n_estimators': 200, 'n_jobs': None, 'num_parallel_tree': None, 'random_state': None, 'reg_alpha': 0.1, 'reg_lambda': 0.1, 'sampling_method': None, 'scale_pos_weight': None, 'subsample': 0.6, 'tree_method': None, 'validate_parameters': None, 'verbosity': None}"
+            }
+        }
+    },
+    "notes": "Drive tests indices are in order 2024-10-04, 2024-10-28, 2024-10-29"
+}

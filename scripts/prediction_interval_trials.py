@@ -2,83 +2,173 @@
 Generating results from running trials of conformal prediction models
 """
 
+import numpy as np
 import pandas as pd
 
-# Sci-kit
-from sklearn.ensemble import RandomForestRegressor
-
-# Torch
-from torch import optim
-from skorch import NeuralNetRegressor
-
-# xg-boost
-import xgboost as xgb
-
-# Random Forest Quantile
-from sklearn_quantile import RandomForestQuantileRegressor
-
-from data.data_loader import loadDataCsv, loadHyperparams
+from data.data_loader import loadDataCsv, loadCsv
 from data.data_processing import (
     processData,
     getDataProcessor,
-    trainValTestSplit,
+    trainTestSplit,
 )
 from data.data_saver import saveExperimentData
-from models.model import Model
-from models.neuralnetwork.architecture import ThroughputPredictor
-from models.conformalprediction.conformalizing_scalar import (
-    ConformalizingScalarPredictor,
-)
-from models.conformalprediction.quantile_regression import (
-    ConformalizedQuantileRegressor,
-    QuantileRegressorNeuralNet,
-    QuantileRegressorRandomForest,
-)
-from models.conformalprediction.pinball import (
-    PinballLoss,
-    pinballLossScorer,
-    doublePinballLossScorer,
-)
+from models.tuned_models import getQuantileRegressionModels, getConformalModels
 
 
 def main():
     saveDir = "experiments/uncertainty-intervals/"
     modelCol = "Model"
     alphaCol = "Alpha"
-    trainRatioCol = "Train ratio"
-    samplesCol = "Number of Samples"
-    samplesEvalCol = "Evaluation Samples"
+    samplesCol = "Training samples"
+    reserveredRatioCol = "Reserved ratio"
     coverageCol = "Empirical coverage"
     widthCol = "Empirical width"
 
-    # Generate new measurements
     cols = [
         modelCol,
         alphaCol,
-        trainRatioCol,
         samplesCol,
-        samplesEvalCol,
+        reserveredRatioCol,
         coverageCol,
         widthCol,
     ]
-    testRatio = 0.1
-    trainRatios = [0.7, 0.8, 0.9]
-    alphas = [0.1, 0.2]
-    numTrials = 20
-    runTrialsAndSaveData(cols, testRatio, trainRatios, alphas, numTrials, saveDir)
+    evaluateReservedRatio(saveDir + "reserved-ratio/", cols)
+    evaluateTargetCoverage(saveDir + "target-coverage/", cols)
+    evaluateSampleSizes(saveDir + "samples/", cols)
+    evaluateBootstrap(saveDir + "bootstrap/", cols)
+    evaluateFailedGeneralization(saveDir + "generalization/", cols)
+    evaluateBounds(saveDir + "bounds/")
 
-# pylint: disable-msg=too-many-locals, too-many-statements
+
+def evaluateReservedRatio(saveDir, cols):
+    experimentName = "evaluate_reserved_ratio"
+    trainDataDir = "data/intermediate/sthlm-sodertalje/train/"
+    testDataDir = "data/intermediate/sthlm-sodertalje/test/"
+    dfTrain = loadDataCsv(trainDataDir, ["", "-"])
+    dfTest = loadDataCsv(testDataDir, ["", "-"])
+
+    reservedRatios = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
+    alphas = [0.1, 0.2]
+    runTrialsAndSaveData(
+        experimentName,
+        dfTrain,
+        dfTest,
+        cols,
+        reservedRatios,
+        alphas,
+        saveDir,
+        isQuantile=False,
+    )
+
+
+def evaluateTargetCoverage(saveDir, cols):
+    experimentName = "evaluate_target_coverage"
+    trainDataDir = "data/intermediate/sthlm-sodertalje/train/"
+    testDataDir = "data/intermediate/sthlm-sodertalje/test/"
+    dfTrain = loadDataCsv(trainDataDir, ["", "-"])
+    dfTest = loadDataCsv(testDataDir, ["", "-"])
+
+    reservedRatios = [0.15]
+    alphas = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
+
+    runTrialsAndSaveData(
+        experimentName, dfTrain, dfTest, cols, reservedRatios, alphas, saveDir
+    )
+
+
+def evaluateSampleSizes(saveDir, cols):
+    experimentName = "evaluate_sample_sizes"
+    trainDataDir = "data/intermediate/sthlm-sodertalje/train/"
+    testDataDir = "data/intermediate/sthlm-sodertalje/test/"
+    dfTrain = loadDataCsv(trainDataDir, ["", "-"])
+    dfTest = loadDataCsv(testDataDir, ["", "-"])
+
+    reservedRatios = [0.15]
+    alphas = [0.1]
+    samples = [1000, 2000, 5000, 8000, 12000, 15000, 17368]
+    runTrialsAndSaveData(
+        experimentName,
+        dfTrain,
+        dfTest,
+        cols,
+        reservedRatios,
+        alphas,
+        saveDir,
+        sampleSizes=samples,
+    )
+
+
+def evaluateBootstrap(saveDir, cols):
+    experimentName = "evaluate_bootstrap_variations"
+    trainDataDir = "data/intermediate/sthlm-sodertalje/train/"
+    testDataDir = "data/intermediate/sthlm-sodertalje/test/"
+    dfTrain = loadDataCsv(trainDataDir, ["", "-"])
+    dfTest = loadDataCsv(testDataDir, ["", "-"])
+
+    reservedRatios = [0.15]
+    alphas = [0.1, 0.2]
+    numTrials = 30
+    runTrialsAndSaveData(
+        experimentName,
+        dfTrain,
+        dfTest,
+        cols,
+        reservedRatios,
+        alphas,
+        saveDir,
+        numTrials=numTrials,
+    )
+
+
+def evaluateFailedGeneralization(saveDir, cols):
+    experimentName = "evaluate_generalization"
+    dataDir = "data/intermediate/sthlm-sodertalje/"
+
+    df241004 = loadCsv(dataDir + "2024.10.04_11.19.11.csv", ["", "-"])
+    df241028 = loadCsv(dataDir + "2024.10.28_17.20.20.csv", ["", "-"])
+    df241029 = loadCsv(dataDir + "2024.10.29_07.18.51.csv", ["", "-"])
+    dfs = [df241029, df241004, df241028]
+
+    reservedRatios = [0.15]
+    alphas = [0.1]
+    for i, dfTest in enumerate(dfs):
+        dfTrain = pd.concat(
+            [df for j, df in enumerate(dfs) if j != i], ignore_index=True, join="outer"
+        )
+        runTrialsAndSaveData(
+            f"{experimentName}_drivetest_{i+1}",
+            dfTrain.copy(),
+            dfTest.copy(),
+            cols,
+            reservedRatios,
+            alphas,
+            saveDir,
+            note="Drive tests indices are in order 2024-10-04, 2024-10-28, 2024-10-29",
+        )
+
+
+# pylint: disable-msg=too-many-locals, too-many-statements, too-many-arguments, dangerous-default-value, too-many-nested-blocks
 def runTrialsAndSaveData(
-    cols, testRatio, trainRatios, alphas, numTrials, saveDir, verbose=True
+    experimentName,
+    dfTrain,
+    dfTest,
+    cols,
+    reservedRatios,
+    alphas,
+    saveDir,
+    numTrials=1,
+    sampleSizes=[None],
+    verbose=True,
+    isQuantile=True,
+    note=None,
 ):
-    dataDir = "data/intermediate/sthlm-sodertalje/train/"
     hyperparamsDir = "config/hyperparameters/"
-    df = loadDataCsv(dataDir, "")
 
     ### DATA PREPARATION ###
     dependentCol = "UL_bitrate"
     # Mbps from Kbps
-    df[dependentCol] = df[dependentCol] / 1024
+    dfTrain[dependentCol] = dfTrain[dependentCol] / 1024
+    dfTest[dependentCol] = dfTest[dependentCol] / 1024
 
     selectedFloatCols = [
         "Longitude",
@@ -100,162 +190,200 @@ def runTrialsAndSaveData(
 
     processor = getDataProcessor(selectedFloatCols, selectedCatCols, applyScaler=True)
     dataX, dataY = processData(
-        df, selectedFloatCols, selectedCatCols, dependentCol, processor
+        dfTrain, selectedFloatCols, selectedCatCols, dependentCol, processor
+    )
+    xTest, yTest = processData(
+        dfTest,
+        selectedFloatCols,
+        selectedCatCols,
+        dependentCol,
+        processor,
+        fitProcessor=False,
     )
 
     data = []
+    bootstrap = numTrials > 1
     for i, alpha in enumerate(alphas):
-        ### NEURAL NET QUANTILE REGRESSOR ###
-        lowerNet = NeuralNetRegressor(
-            ThroughputPredictor,
-            module__input_size=dataX.shape[1],
-            optimizer=optim.Adam,
-            criterion=PinballLoss(alpha / 2),
-            verbose=0,
-            train_split=None,
-        )
-        upperNet = NeuralNetRegressor(
-            ThroughputPredictor,
-            module__input_size=dataX.shape[1],
-            optimizer=optim.Adam,
-            criterion=PinballLoss(1 - alpha / 2),
-            verbose=0,
-            train_split=None,
-        )
-        paramGridNetLower = loadHyperparams(hyperparamsDir + "nn_lower.json")
-        paramGridNetUpper = loadHyperparams(hyperparamsDir + "nn_upper.json")
-
-        lowerScorer = pinballLossScorer(alpha / 2)
-        upperScorer = pinballLossScorer(1 - alpha / 2)
-        lowerModel = Model(
-            lowerNet, "NN_lower", paramGridNetLower, lowerScorer
-        )
-        upperModel = Model(
-            upperNet, "NN_upper", paramGridNetUpper, upperScorer
-        )
-
-        quantileNeuralNetRegressor = QuantileRegressorNeuralNet(
-            [lowerModel, upperModel], alpha, "QNN"
-        )
-        conformalQuantileNeuralNetRegressor = ConformalizedQuantileRegressor(
-            quantileNeuralNetRegressor, name="CQNN"
-        )
-
-        ### RANDOM FOREST QUANTILE REGRESSOR ###
-
-        rfq = RandomForestQuantileRegressor(q=[alpha / 2, 1 - alpha / 2])
-        paramGridRfq = loadHyperparams(hyperparamsDir + "qrf.json")
-        doublePinballScorer = doublePinballLossScorer(alpha / 2, 1 - alpha / 2)
-        rqfModel = Model(rfq, "QRF", paramGridRfq, doublePinballScorer)
-
-        quantileForestRegressor = QuantileRegressorRandomForest(
-            [rqfModel], alpha, "QRF"
-        )
-        conformalQuantileForestRegressor = ConformalizedQuantileRegressor(
-            quantileForestRegressor, name="CQRF"
-        )
-
-        ### RANDOM FOREST CONFORMALIZING SCALAR PREDICTOR ###
-        rfBase = RandomForestRegressor()
-        paramGridRfBase = loadHyperparams(hyperparamsDir + "rf.json")
-
-        rfError = RandomForestRegressor()
-        paramGridRfError = loadHyperparams(hyperparamsDir + "rf_error.json")
-        rfBaseModel = Model(rfBase, "RF", paramGridRfBase)
-        rfErrorModel = Model(rfError, "RF_error", paramGridRfError)
-
-        rfConformalizingScalar = ConformalizingScalarPredictor(
-            rfBaseModel, rfErrorModel, alpha, name="CSRF"
-        )
-
-        xgbBase = xgb.XGBRegressor()
-        paramGridXgbBase = loadHyperparams(hyperparamsDir + "xgb.json")
-
-        xgbError = xgb.XGBRegressor()
-        paramGridXgbError = loadHyperparams(hyperparamsDir + "xgb_error.json")
-
-        xgbBaseModel = Model(xgbBase, "XGB", paramGridXgbBase)
-        xgbErrorModel = Model(xgbError, "XGB_error", paramGridXgbError)
-
-        xgbConformalizingScalar = ConformalizingScalarPredictor(
-            xgbBaseModel, xgbErrorModel, alpha, name="CSXGB"
-        )
-
-        conformalPredictors = [
-            conformalQuantileForestRegressor,
-            conformalQuantileNeuralNetRegressor,
-            rfConformalizingScalar,
-            xgbConformalizingScalar,
-        ]
-        for j, trainRatio in enumerate(trainRatios):
-            trainRatioOfAllData = trainRatio * (1 - testRatio)
-            validatioRatio = 1 - trainRatioOfAllData - testRatio
-            for _ in range(numTrials):
-                ### DIVIDE INTO TRAINING, VALIDATION AND TEST ###
-                xTrain, xRes, xTest, yTrain, yRes, yTest = trainValTestSplit(
-                    dataX, dataY, trainRatioOfAllData, validatioRatio
-                )
-                samples = xTrain.shape[0] + xRes.shape[0]
-                testSamples = xTest.shape[0]
-
-                ### TRAINING ###
-                for conformalModel in conformalPredictors:
-                    conformalModel.fit(xTrain, yTrain, xRes, yRes, 2)
-
-                ### EVALUATION ###
-                for conformalModel in conformalPredictors:
-                    name = conformalModel.getName()
-                    addMetricsToList(
-                        data,
-                        conformalModel,
-                        name,
-                        alpha,
-                        trainRatio,
-                        samples,
-                        testSamples,
-                        xTest,
-                        yTest,
+        for j, reservedRatio in enumerate(reservedRatios):
+            for k in range(numTrials):
+                for sampleSize in sampleSizes:
+                    xTrain, xRes, yTrain, yRes = getTrainReservedData(
+                        dataX,
+                        dataY,
+                        reservedRatio=reservedRatio,
+                        sampleSize=sampleSize,
+                        bootstrap=bootstrap,
                     )
-                    try:
-                        qModel = conformalModel.getQuantileRegressor()
-                        qName = qModel.getName()
-                        addMetricsToList(
-                            data,
-                            qModel,
-                            qName,
-                            alpha,
-                            trainRatio,
-                            samples,
-                            testSamples,
-                            xTest,
-                            yTest,
-                        )
-                    except AttributeError:
-                        pass
-            if verbose:
-                completedShare = (i * len(trainRatios) + j + 1) / (
-                    len(alphas) * len(trainRatios)
-                )
-                print(f"Completed {completedShare*100:.2f}% of trials")
 
-    df = pd.DataFrame(data, columns=cols)
+                    ### TRAINING ###
+                    conformalPredictors = getConformalModels(
+                        alpha, hyperparamsDir, dataX.shape[1]
+                    )
+                    for model in conformalPredictors:
+                        model.fit(xTrain, yTrain, xRes, yRes)
+                    if isQuantile:
+                        quantileModels = getQuantileRegressionModels(
+                            alpha, hyperparamsDir, dataX.shape[1]
+                        )
+                        for qModel in quantileModels:
+                            qModel.fit(
+                                np.vstack((xTrain, xRes)), pd.concat([yTrain, yRes])
+                            )
+                        models = conformalPredictors + quantileModels
+                    else:
+                        models = conformalPredictors
+
+                    ### EVALUATION ###
+                    for model in models:
+                        covRatio = model.getCoverageRatio(xTest, yTest)
+                        data.append(
+                            [
+                                model.getName(),
+                                alpha,
+                                sampleSize,
+                                reservedRatio,
+                                covRatio,
+                                model.getAverageIntervalWidth(xTest),
+                            ]
+                        )
+                if verbose:
+                    totalCompleted = (i * len(reservedRatios) + j) * numTrials + k + 1
+                    totalTrials = len(alphas) * len(reservedRatios) * numTrials
+                    print(f"Completed {totalCompleted/totalTrials*100:.2f}% of trials")
+
+    dfResults = pd.DataFrame(data, columns=cols)
     saveExperimentData(
-        df,
+        dfResults,
         saveDir,
-        "uncertainty_intervals_trials",
+        experimentName,
         selectedFloatCols,
         selectedCatCols,
         conformalPredictors,
-        "",
+        note,
     )
 
 
-def addMetricsToList(
-    data, model, name, alpha, trainRatio, samples, testSamples, xTest, yTest
-):
-    coverage = model.getCoverageRatio(xTest, yTest)
-    width = model.getAverageIntervalWidth(xTest)
-    data.append([name, alpha, trainRatio, samples, testSamples, coverage, width])
+def getTrainReservedData(x, y, reservedRatio=0.1, sampleSize=None, bootstrap=False):
+    trainRatio = 1 - reservedRatio
+    if sampleSize:
+        indices = np.random.permutation(x.shape[0])
+        x = x[indices[:sampleSize], :]
+        y = y.iloc[indices[:sampleSize]]
+    xTrain, xRes, yTrain, yRes = trainTestSplit(x, y, trainRatio)
+    if bootstrap:
+        indicesTrain = np.random.choice(
+            np.arange(xTrain.shape[0]), size=xTrain.shape[0], replace=True
+        )
+        xTrain = xTrain[indicesTrain]
+        yTrain = yTrain.iloc[indicesTrain]
+        indicesRes = np.random.choice(
+            np.arange(xRes.shape[0]), size=xRes.shape[0], replace=True
+        )
+        xRes = xRes[indicesRes]
+        yRes = yRes.iloc[indicesRes]
+    return xTrain, xRes, yTrain, yRes
+
+
+# pylint: disable-msg=too-many-locals
+def evaluateBounds(saveDir):
+    experimentName = "evaluate_bounds"
+    hyperparamsDir = "config/hyperparameters/"
+    trainDataDir = "data/intermediate/sthlm-sodertalje/train/"
+    testDataDir = "data/intermediate/sthlm-sodertalje/test/"
+    dfTrain = loadDataCsv(trainDataDir, ["", "-"])
+    dfTest = loadDataCsv(testDataDir, ["", "-"])
+
+    cols = [
+        "Model",
+        "Alpha",
+        "Lower Bound Average",
+        "Upper Bound Average",
+        "Share of points less than Lower Bound",
+        "Share of points greater than Upper Bound",
+    ]
+
+    ### DATA PREPARATION ###
+    dependentCol = "UL_bitrate"
+    # Mbps from Kbps
+    dfTrain[dependentCol] = dfTrain[dependentCol] / 1024
+    dfTest[dependentCol] = dfTest[dependentCol] / 1024
+
+    selectedFloatCols = [
+        "Longitude",
+        "Latitude",
+        "Speed",
+        "SNR",
+        "Level",
+        "Qual",
+    ]
+    selectedCatCols = [
+        "CellID",
+        "Node",
+        "NetworkMode",
+        "BAND",
+        "BANDWIDTH",
+        "LAC",
+        "PSC",
+    ]
+
+    processor = getDataProcessor(selectedFloatCols, selectedCatCols, applyScaler=True)
+    dataX, dataY = processData(
+        dfTrain, selectedFloatCols, selectedCatCols, dependentCol, processor
+    )
+    xTest, yTest = processData(
+        dfTest,
+        selectedFloatCols,
+        selectedCatCols,
+        dependentCol,
+        processor,
+        fitProcessor=False,
+    )
+    xTrain, xRes, yTrain, yRes = trainTestSplit(dataX, dataY, trainSize=0.85)
+
+    data = []
+    alphas = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
+    for alpha in alphas:
+        conformalPredictors = getConformalModels(alpha, hyperparamsDir, dataX.shape[1])
+        for model in conformalPredictors:
+            model.fit(xTrain, yTrain, xRes, yRes)
+
+        quantileModels = getQuantileRegressionModels(
+            alpha, hyperparamsDir, dataX.shape[1]
+        )
+        for qModel in quantileModels:
+            qModel.fit(np.vstack((xTrain, xRes)), pd.concat([yTrain, yRes]))
+
+        models = conformalPredictors + quantileModels
+
+        ### EVALUATION ###
+        for model in models:
+            yPred = model.predict(xTest)
+            lowerBounds = yPred[0]
+            upperBounds = yPred[1]
+            lowerBoundsAvg = np.average(lowerBounds)
+            upperBoundsAvg = np.average(upperBounds)
+            lowerBoundsRatio = np.average(lowerBounds > yTest)
+            upperBoundsRatio = np.average(upperBounds > yTest)
+            data.append(
+                [
+                    model.getName(),
+                    alpha,
+                    lowerBoundsAvg,
+                    upperBoundsAvg,
+                    lowerBoundsRatio,
+                    upperBoundsRatio,
+                ]
+            )
+
+    dfResults = pd.DataFrame(data, columns=cols)
+    saveExperimentData(
+        dfResults,
+        saveDir,
+        experimentName,
+        selectedFloatCols,
+        selectedCatCols,
+        conformalPredictors,
+    )
 
 
 main()

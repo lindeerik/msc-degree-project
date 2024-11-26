@@ -206,7 +206,7 @@ def predictionIntervalModelsTuning(
     rfErrorModel = Model(rfError, "RF_error", paramGridRfError)
 
     conformalizingScalarRf = ConformalizingScalarPredictor(
-        rfBaseModel, rfErrorModel, alpha, name="CSRF"
+        rfBaseModel, rfErrorModel, alpha, name="L-RF"
     )
 
     xgbBase = xgb.XGBRegressor(random_state=42)
@@ -219,7 +219,7 @@ def predictionIntervalModelsTuning(
     xgbErrorModel = Model(xgbError, "XGB_error", paramGridXgbError)
 
     conformalizingScalarXgb = ConformalizingScalarPredictor(
-        xgbBaseModel, xgbErrorModel, alpha, name="CSXGB"
+        xgbBaseModel, xgbErrorModel, alpha, name="L-XGB"
     )
 
     conformalModels = [

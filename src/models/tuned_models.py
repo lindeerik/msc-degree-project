@@ -178,7 +178,7 @@ def getConformalizingScalarRandomForest(alpha, hyperparamsDir):
     rfErrorModel = getRandomForestErrorModel(hyperparamsDir)
 
     rfConformalizingScalar = ConformalizingScalarPredictor(
-        rfBaseModel, rfErrorModel, alpha, name="CSRF", minVal=0
+        rfBaseModel, rfErrorModel, alpha, name="L-RF", minVal=0
     )
     return rfConformalizingScalar
 
@@ -188,6 +188,6 @@ def getConformalizingScalarXGBoost(alpha, hyperparamsDir):
     xgbErrorModel = getXGBoostErrorModel(hyperparamsDir)
 
     xgbConformalizingScalar = ConformalizingScalarPredictor(
-        xgbBaseModel, xgbErrorModel, alpha, name="CSXGB", minVal=0
+        xgbBaseModel, xgbErrorModel, alpha, name="L-XGB", minVal=0
     )
     return xgbConformalizingScalar

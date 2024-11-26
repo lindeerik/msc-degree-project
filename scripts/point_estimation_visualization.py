@@ -4,74 +4,115 @@ Generating plots of point estimation trials. May be shown directly or saved to d
 
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
-from visualization.plots import plotBoxplotFromDf, plotLineChartFromDf
+from visualization.plots import plotLineChartFromDf
 from visualization.save_figures import saveFiguresWithDateTime
 
 
 def main():
-    saveDir = "data/results/point-estimation/"
+    saveDir = "experiments/point-estimation/samples/20241118T160153Z/"
     modelCol = "Model"
-    trainRatioCol = "Train ratio"
     samplesCol = "Number of Samples"
-    r2Col = "Coefficient of Determination (R2)"
-    rmseCol = "Mean Squared Error"
-    df = pd.read_csv(saveDir + "20241025T092710Z.csv")
+    trainRmseCol = "Training RMSE"
+    testRmseCol = "Test RMSE"
+    trainMaeCol = "Training MAE"
+    testMaeCol = "Test MAE"
 
+    df = pd.read_csv(saveDir + "data.csv")
+    fileNames = ["rmse_samples.png", "mae_samples.png"]
     visualizeTrials(
         df,
         modelCol,
-        trainRatioCol,
         samplesCol,
-        r2Col,
-        rmseCol,
+        trainRmseCol,
+        testRmseCol,
+        trainMaeCol,
+        testMaeCol,
         show=False,
         savePath="figures/",
+        fileNames=fileNames,
     )
 
 
 def visualizeTrials(
     df,
     modelCol,
-    trainRatioCol,
     samplesCol,
-    r2Col,
-    rmseCol,
+    trainRmseCol,
+    testRmseCol,
+    trainMaeCol,
+    testMaeCol,
     show=True,
     savePath=None,
+    fileNames=None,
 ):
-    titleR2 = "Determination of Coefficient ($R^2$)"
-    titleRmse = "Root Mean Squared Error"
+    rmseCol = "RMSE"
+    maeCol = "MAE"
+    trainTestCol = "Train or Test"
+    titleRmse = "Root Mean Squared Error (RMSE) vs. Sample Size"
+    titleMae = "Mean Absolute Error (MAE) vs. Sample Size"
 
-    # Fixed train ratio = 0.8
-    dfFixedTrainRatio = df[df[trainRatioCol] == 0.8]
+    colors = sns.color_palette("Dark2")
+    palette = [colors[0], colors[0], colors[1], colors[1], colors[2], colors[2]]
+    dashes = [(1, 0), (4, 2), (1, 0), (4, 2), (1, 0), (4, 2)]
 
-    plotBoxplotFromDf(
-        dfFixedTrainRatio,
-        f"{titleR2}: 80% Train Ratio",
-        modelCol,
-        r2Col,
-    )
-
-    plotBoxplotFromDf(
-        dfFixedTrainRatio,
-        f"{titleRmse}: 80% Train Ratio",
-        modelCol,
-        rmseCol,
-    )
-
-    plotLineChartFromDf(
+    dfRmse = pd.melt(
         df,
+        id_vars=[samplesCol, modelCol],
+        value_vars=[trainRmseCol, testRmseCol],
+        var_name=trainTestCol,
+        value_name=rmseCol,
+    )
+
+    dfRmse[trainTestCol] = dfRmse[trainTestCol].replace(
+        {
+            trainRmseCol: "Train",
+            testRmseCol: "Test",
+        }
+    )
+    dfRmse[modelCol] = dfRmse[modelCol] + " " + dfRmse[trainTestCol]
+    dfRmse = dfRmse.drop(columns=trainTestCol)
+    plotLineChartFromDf(
+        dfRmse,
         samplesCol,
-        r2Col,
+        rmseCol,
         modelCol,
-        f"{titleR2} vs. Number of Samples",
+        titleRmse,
+        palette=palette,
+        dashes=dashes,
+    )
+
+    dfMae = pd.melt(
+        df,
+        id_vars=[samplesCol, modelCol],
+        value_vars=[trainMaeCol, testMaeCol],
+        var_name=trainTestCol,
+        value_name=maeCol,
+    )
+
+    dfMae[trainTestCol] = dfMae[trainTestCol].replace(
+        {
+            trainMaeCol: "Train",
+            testMaeCol: "Test",
+        }
+    )
+    dfMae[modelCol] = dfMae[modelCol] + " " + dfMae[trainTestCol]
+    dfMae = dfMae.drop(columns=trainTestCol)
+    plotLineChartFromDf(
+        dfMae,
+        samplesCol,
+        maeCol,
+        modelCol,
+        titleMae,
+        palette=palette,
+        dashes=dashes,
     )
 
     if show:
         plt.show()
     if savePath:
-        saveFiguresWithDateTime(savePath)
+        saveFiguresWithDateTime(savePath, fileNames)
 
 
 main()

@@ -43,17 +43,16 @@ def plotBoxplotFromDf(
 ):
     sns.set_theme(style="whitegrid", palette="pastel")
     plt.figure(figsize=figSize)
-    sns.boxplot(
-        x=xLabel, y=yLabel, data=df, linewidth=1.5, order=sorted(df[xLabel].unique())
-    )
+    sns.boxplot(x=xLabel, y=yLabel, data=df, linewidth=1.5)
 
     if addHLine and valHLine is not None:
         plt.axhline(y=valHLine, color="red", linestyle="--", linewidth=2)
 
     sns.despine(left=True)
-    plt.title(title, fontsize=14)
-    plt.xlabel(xLabel, fontsize=12)
-    plt.ylabel(yLabel, fontsize=12)
+    plt.tick_params(axis="both", which="major", labelsize=16)
+    plt.title(title, fontsize=20)
+    plt.xlabel("")
+    plt.ylabel(yLabel, fontsize=18)
 
     if show:
         plt.show()
@@ -73,8 +72,8 @@ def plotLineChartFromDf(
     palette=None,
     dashes=True,
 ):
-    df = df.groupby([xLabel, groupLabel]).mean().reset_index()
-    sns.set_theme(style="whitegrid", palette="pastel")
+    df = df.groupby([xLabel, groupLabel], observed=True).mean().reset_index()
+    sns.set_theme(style="whitegrid", palette="Dark2")
     plt.subplots(figsize=figSize)
 
     sns.lineplot(
@@ -95,11 +94,12 @@ def plotLineChartFromDf(
         maxVal = max(df[xLabel].max(), df[yLabel].max())
         plt.plot([minVal, maxVal], [minVal, maxVal], "r", label=diagLabel, linewidth=1)
 
-    plt.title(title, fontsize=14)
-    plt.xlabel(xLabel, fontsize=12)
-    plt.ylabel(yLabel, fontsize=12)
+    plt.title(title, fontsize=20)
+    plt.xlabel(xLabel, fontsize=18)
+    plt.ylabel(yLabel, fontsize=18)
+    plt.tick_params(axis="both", which="major", labelsize=16)
     sns.despine(left=True)
-    plt.legend(title=groupLabel, title_fontsize="13", fontsize="11")
+    plt.legend(fontsize="14")
 
     if show:
         plt.show()
